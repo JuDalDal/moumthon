@@ -1,71 +1,41 @@
-# Project Structure Guide for Agents
+# AGENTS.md
 
-## Overview
+## Stack
+Next.js App Router, TypeScript, Tailwind CSS, @base-ui/react, class-variance-authority, Zustand.
 
-This is a Next.js project using the App Router, TypeScript, and CSS Modules (no Tailwind).
+## File Placement
+- New route → `src/app/<route>/page.tsx`
+- Reusable UI → `src/components/common/<Name>.tsx`
+- Feature component → `src/components/feature/<feature>/<Name>.tsx`
+- Custom hook → `src/hooks/use<Name>.ts`
+- Utility → `src/libs/<name>.ts`
+- Storage accessor → `src/libs/storage/<name>.ts`
+- Global state → `src/stores/<domain>Store.ts`
 
-## Directory Structure
+## Naming
+- Components: PascalCase
+- Hooks: `use<Name>.ts`
+- Stores: `<domain>Store.ts`
+- Dynamic segments: bracket notation `[slug]`
 
-```
-src/
-├── app/              # Next.js App Router pages and layouts
-├── components/       # React components
-│   ├── common/       # Reusable, shared components (buttons, inputs, modals, etc.)
-│   └── feature/      # Feature-specific components tied to a particular domain
-├── hooks/            # Custom React hooks
-├── libs/             # Utility functions and third-party integrations
-│   └── storage/      # Storage utilities (localStorage, sessionStorage, cookies, etc.)
-├── stores/           # Global state management (e.g., Zustand stores)
-└── assets/           # Static assets (images, icons, fonts, etc.)
-```
+---
 
-## Directory Conventions
+## Read these docs based on the task
 
-### `src/app/`
-Next.js App Router. Contains `page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx`, and other route files. Each subdirectory represents a route segment.
+**페이지를 새로 만들거나 라우팅/링크가 관련된 경우**
+→ read `docs/routing.md`
 
-### `src/components/common/`
-Generic, reusable UI components with no dependency on specific business logic. These should be self-contained and usable anywhere in the project.
+**레이아웃, GNB, 페이지 구조를 다루는 경우**
+→ read `docs/layout.md`
 
-Examples: `Button`, `Input`, `Modal`, `Card`
+**컴포넌트를 만들거나 수정하는 경우**
+→ read `docs/components.md`
 
-### `src/components/feature/`
-Components scoped to a specific feature or domain. These may depend on stores, hooks, or libs related to their feature.
+**스타일링, 색상, Tailwind 클래스를 작성하는 경우**
+→ read `docs/styling.md`
 
-Organize by feature subdirectory:
-```
-components/feature/
-└── auth/
-    ├── LoginForm.tsx
-    └── LoginForm.module.css
-```
+**데이터를 다루거나 타입이 필요한 경우**
+→ read `docs/data.md`
 
-### `src/hooks/`
-Custom React hooks. Each hook file should be named `use<Name>.ts`.
-
-Examples: `useAuth.ts`, `useModal.ts`, `useFetch.ts`
-
-### `src/libs/`
-Utility functions, helpers, and third-party library wrappers.
-
-#### `src/libs/storage/`
-Abstractions over browser storage APIs (localStorage, sessionStorage, cookies). Export typed getter/setter functions rather than accessing storage APIs directly.
-
-### `src/stores/`
-Global state stores. Use one file per domain/feature store.
-
-Examples: `authStore.ts`, `uiStore.ts`
-
-### `src/assets/`
-Static assets imported directly into components. Large or public-facing assets should go in the `/public` directory instead.
-
-## Styling
-
-Use CSS Modules exclusively. Each component should have a co-located `.module.css` file.
-
-```
-Button.tsx
-Button.module.css
-```
-
-Do not use Tailwind or inline styles.
+**초기 데이터 추가/수정이 필요한 경우**
+→ read `docs/seed.md`
