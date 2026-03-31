@@ -1,5 +1,5 @@
 #!/bin/sh
 cd ../
 mkdir output
-cp -R ./FRONTEND/* ./output
-cp -R ./output ./FRONTEND/
+cp -R ./moumthon/* ./output
+cp -R ./output ./moumthon/
