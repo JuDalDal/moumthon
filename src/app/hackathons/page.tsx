@@ -1,20 +1,16 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import type React from "react"
-import { Clock, Zap, CheckCircle, RotateCcw } from "lucide-react"
+import { RotateCcw } from "lucide-react"
 import hackathonsData from "@/assets/data/public_hackathons.json"
 import { HackathonCard } from "@/components/feature/hackathons/HackathonCard"
 import { cn } from "@/lib/utils"
 import type { Hackathon, HackathonStatus } from "@/types/hackathon"
+import { STATUS_LABEL, STATUS_ICON } from "@/libs/hackathonStatus"
 
 const hackathons = hackathonsData as Hackathon[]
 
-const STATUS_OPTIONS: { value: HackathonStatus; label: string; icon: React.ReactNode }[] = [
-  { value: "upcoming", label: "예정",    icon: <Clock       size={14} /> },
-  { value: "ongoing",  label: "진행 중", icon: <Zap         size={14} /> },
-  { value: "ended",    label: "종료",    icon: <CheckCircle size={14} /> },
-]
+const STATUS_OPTIONS: HackathonStatus[] = ["upcoming", "ongoing", "ended"]
 
 const ALL_TAGS = Array.from(new Set(hackathons.flatMap((h) => h.tags))).sort()
 
@@ -64,8 +60,9 @@ export default function HackathonsPage() {
           <span className="text-base font-bold text-primary-600 shrink-0">상태</span>
           <div className="w-px self-stretch bg-border shrink-0" />
           <div className="flex gap-2 flex-wrap">
-            {STATUS_OPTIONS.map(({ value, label, icon }) => {
+            {STATUS_OPTIONS.map((value) => {
               const active = statusFilter === value
+              const Icon = STATUS_ICON[value]
               return (
                 <button
                   key={value}
@@ -77,8 +74,8 @@ export default function HackathonsPage() {
                       : "text-foreground border-border hover:bg-accent hover:text-accent-foreground",
                   )}
                 >
-                  {icon}
-                  {label}
+                  <Icon size={14} />
+                  {STATUS_LABEL[value]}
                 </button>
               )
             })}

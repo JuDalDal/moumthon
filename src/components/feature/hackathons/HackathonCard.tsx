@@ -1,37 +1,32 @@
 "use client"
 
-import type React from "react"
+import type { ReactNode } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { Clock, Zap, CheckCircle, BookOpen, HelpCircle } from "lucide-react"
+import { BookOpen, HelpCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { STATUS_LABEL, STATUS_ICON, STATUS_BADGE_CLASS } from "@/libs/hackathonStatus"
+import { formatDate } from "@/libs/formatDate"
 import type { Hackathon } from "@/types/hackathon"
 
-const STATUS_LABEL: Record<Hackathon["status"], string> = {
-  upcoming: "예정",
-  ongoing:  "진행 중",
-  ended:    "종료",
-}
-
-const STATUS_ICON: Record<Hackathon["status"], React.ReactNode> = {
-  upcoming: <Clock size={11} />,
-  ongoing:  <Zap size={11} />,
-  ended:    <CheckCircle size={11} />,
-}
-
-const STATUS_BADGE_CLASS: Record<Hackathon["status"], string> = {
-  upcoming: "bg-primary text-white border-transparent",
-  ongoing:  "bg-emerald-500 text-white border-transparent",
-  ended:    "bg-zinc-500 text-white border-transparent",
-}
-
-function formatDate(iso: string, timezone: string) {
-  return new Date(iso).toLocaleDateString("ko-KR", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    timeZone: timezone,
-  })
+function CardExternalLink({
+  href,
+  children,
+}: {
+  href: string
+  children: ReactNode
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={(e) => e.stopPropagation()}
+      className="inline-flex items-center gap-1.5 rounded-md bg-white/15 backdrop-blur-sm border border-white/20 px-3 py-1.5 text-sm text-white/80 hover:bg-white/25 hover:text-white transition-colors flex-1 justify-center"
+    >
+      {children}
+    </a>
+  )
 }
 
 interface HackathonCardProps {
@@ -41,13 +36,13 @@ interface HackathonCardProps {
 export function HackathonCard({ hackathon }: HackathonCardProps) {
   const router = useRouter()
   const { period, links } = hackathon
+  const StatusIcon = STATUS_ICON[hackathon.status]
 
   return (
     <div
       className="group relative aspect-[3/4] overflow-hidden rounded-xl ring-1 ring-foreground/10 transition-shadow duration-300 hover:shadow-[0_8px_32px_rgba(0,0,0,0.4)] cursor-pointer"
       onClick={() => router.push(links.detail)}
     >
-      {/* Background image */}
       <Image
         src={hackathon.thumbnailUrl}
         alt={hackathon.title}
@@ -56,7 +51,6 @@ export function HackathonCard({ hackathon }: HackathonCardProps) {
         className="object-cover transition-transform duration-500 group-hover:scale-105"
       />
 
-      {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-primary-950/90 via-black/40 to-black/10" />
 
       {/* Top row: status badge (left) + participant count (right) */}
@@ -67,7 +61,7 @@ export function HackathonCard({ hackathon }: HackathonCardProps) {
             STATUS_BADGE_CLASS[hackathon.status],
           )}
         >
-          {STATUS_ICON[hackathon.status]}
+          <StatusIcon size={11} />
           {STATUS_LABEL[hackathon.status]}
         </span>
         <span className="inline-flex items-center rounded-lg bg-primary px-3 py-1 text-sm font-bold text-white shadow-md">
@@ -77,12 +71,10 @@ export function HackathonCard({ hackathon }: HackathonCardProps) {
 
       {/* Content — pinned to bottom */}
       <div className="absolute inset-0 flex flex-col justify-end p-4 gap-2">
-        {/* Title */}
         <h3 className="text-lg font-bold leading-snug line-clamp-2 text-white drop-shadow">
           {hackathon.title}
         </h3>
 
-        {/* Tags */}
         <div className="flex flex-wrap gap-1.5 overflow-hidden max-h-7">
           {hackathon.tags.map((tag) => (
             <span
@@ -96,35 +88,21 @@ export function HackathonCard({ hackathon }: HackathonCardProps) {
 
         <div className="border-t border-white/30" />
 
-        {/* Date */}
         <div className="text-xs text-white/70">
           {formatDate(period.submissionDeadlineAt, period.timezone)}
           <span className="mx-1.5 opacity-50">~</span>
           {formatDate(period.endAt, period.timezone)}
         </div>
 
-        {/* Rules / FAQ — stopPropagation to prevent card navigation */}
         <div className="flex gap-3">
-          <a
-            href={links.rules}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="inline-flex items-center gap-1.5 rounded-md bg-white/15 backdrop-blur-sm border border-white/20 px-3 py-1.5 text-sm text-white/80 hover:bg-white/25 hover:text-white transition-colors flex-1 justify-center"
-          >
+          <CardExternalLink href={links.rules}>
             <BookOpen size={13} />
             규칙
-          </a>
-          <a
-            href={links.faq}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="inline-flex items-center gap-1.5 rounded-md bg-white/15 backdrop-blur-sm border border-white/20 px-3 py-1.5 text-sm text-white/80 hover:bg-white/25 hover:text-white transition-colors flex-1 justify-center"
-          >
+          </CardExternalLink>
+          <CardExternalLink href={links.faq}>
             <HelpCircle size={13} />
             FAQ
-          </a>
+          </CardExternalLink>
         </div>
       </div>
     </div>
