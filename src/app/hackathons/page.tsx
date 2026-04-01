@@ -6,7 +6,7 @@ import hackathonsData from "@/assets/data/public_hackathons.json"
 import { HackathonCard } from "@/components/feature/hackathons/HackathonCard"
 import { cn } from "@/lib/utils"
 import type { Hackathon, HackathonStatus } from "@/types/hackathon"
-import { STATUS_LABEL, STATUS_ICON } from "@/libs/hackathonStatus"
+import { STATUS_LABEL, STATUS_ICON } from "@/lib/hackathonStatus"
 
 const hackathons = hackathonsData as Hackathon[]
 
@@ -161,20 +161,45 @@ export default function HackathonsPage() {
             이전
           </button>
 
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <button
-              key={p}
-              onClick={() => setPage(p)}
-              className={cn(
-                "w-9 h-9 rounded-md text-sm border transition-colors",
-                p === currentPage
-                  ? "bg-primary text-primary-foreground border-primary font-medium"
-                  : "border-border hover:bg-muted",
-              )}
-            >
-              {p}
-            </button>
-          ))}
+          {(() => {
+            const pages: (number | "...")[] = []
+            const delta = 2
+
+            for (let p = 1; p <= totalPages; p++) {
+              if (
+                p === 1 ||
+                p === totalPages ||
+                (p >= currentPage - delta && p <= currentPage + delta)
+              ) {
+                pages.push(p)
+              } else if (
+                pages[pages.length - 1] !== "..."
+              ) {
+                pages.push("...")
+              }
+            }
+
+            return pages.map((p, i) =>
+              p === "..." ? (
+                <span key={`ellipsis-${i}`} className="w-9 h-9 flex items-center justify-center text-sm text-muted-foreground">
+                  …
+                </span>
+              ) : (
+                <button
+                  key={p}
+                  onClick={() => setPage(p)}
+                  className={cn(
+                    "w-9 h-9 rounded-md text-sm border transition-colors",
+                    p === currentPage
+                      ? "bg-primary text-primary-foreground border-primary font-medium"
+                      : "border-border hover:bg-muted",
+                  )}
+                >
+                  {p}
+                </button>
+              )
+            )
+          })()}
 
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}

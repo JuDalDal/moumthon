@@ -1,12 +1,12 @@
 "use client"
 
 import type { ReactNode } from "react"
+import Link from "next/link"
 import Image from "next/image"
-import { useRouter } from "next/navigation"
 import { BookOpen, HelpCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { STATUS_LABEL, STATUS_ICON, STATUS_BADGE_CLASS } from "@/libs/hackathonStatus"
-import { formatDate } from "@/libs/formatDate"
+import { STATUS_LABEL, STATUS_ICON, STATUS_BADGE_CLASS } from "@/lib/hackathonStatus"
+import { formatDate } from "@/lib/formatDate"
 import type { Hackathon } from "@/types/hackathon"
 
 function CardExternalLink({
@@ -21,7 +21,6 @@ function CardExternalLink({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      onClick={(e) => e.stopPropagation()}
       className="inline-flex items-center gap-1.5 rounded-md bg-white/15 backdrop-blur-sm border border-white/20 px-3 py-1.5 text-sm text-white/80 hover:bg-white/25 hover:text-white transition-colors flex-1 justify-center"
     >
       {children}
@@ -34,15 +33,11 @@ interface HackathonCardProps {
 }
 
 export function HackathonCard({ hackathon }: HackathonCardProps) {
-  const router = useRouter()
   const { period, links } = hackathon
   const StatusIcon = STATUS_ICON[hackathon.status]
 
   return (
-    <div
-      className="group relative aspect-[3/4] overflow-hidden rounded-xl ring-1 ring-foreground/10 transition-shadow duration-300 hover:shadow-[0_8px_32px_rgba(0,0,0,0.4)] cursor-pointer"
-      onClick={() => router.push(links.detail)}
-    >
+    <div className="group relative aspect-[3/4] overflow-hidden rounded-xl ring-1 ring-foreground/10 transition-shadow duration-300 hover:shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
       <Image
         src={hackathon.thumbnailUrl}
         alt={hackathon.title}
@@ -53,8 +48,15 @@ export function HackathonCard({ hackathon }: HackathonCardProps) {
 
       <div className="absolute inset-0 bg-gradient-to-t from-primary-950/90 via-black/40 to-black/10" />
 
-      {/* Top row: status badge (left) + participant count (right) */}
-      <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
+      {/* Full-card link — sits below all interactive elements */}
+      <Link
+        href={links.detail}
+        className="absolute inset-0 z-0"
+        aria-label={hackathon.title}
+      />
+
+      {/* Top row: status badge + participant count — above the link */}
+      <div className="absolute top-3 left-3 right-3 z-10 flex items-center justify-between pointer-events-none">
         <span
           className={cn(
             "inline-flex items-center gap-1 rounded-lg border px-3 py-1 text-sm font-semibold backdrop-blur-sm",
@@ -69,8 +71,8 @@ export function HackathonCard({ hackathon }: HackathonCardProps) {
         </span>
       </div>
 
-      {/* Content — pinned to bottom */}
-      <div className="absolute inset-0 flex flex-col justify-end p-4 gap-2">
+      {/* Bottom content — pointer-events-none so clicks fall through to the Link */}
+      <div className="absolute inset-0 z-10 flex flex-col justify-end p-4 gap-2 pointer-events-none">
         <h3 className="text-lg font-bold leading-snug line-clamp-2 text-white drop-shadow">
           {hackathon.title}
         </h3>
@@ -94,7 +96,8 @@ export function HackathonCard({ hackathon }: HackathonCardProps) {
           {formatDate(period.endAt, period.timezone)}
         </div>
 
-        <div className="flex gap-3">
+        {/* Rules / FAQ — re-enable pointer events only here */}
+        <div className="flex gap-3 pointer-events-auto">
           <CardExternalLink href={links.rules}>
             <BookOpen size={13} />
             규칙
