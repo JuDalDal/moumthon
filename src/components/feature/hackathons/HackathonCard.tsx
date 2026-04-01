@@ -4,16 +4,8 @@ import type React from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Clock, Zap, CheckCircle, BookOpen, HelpCircle } from "lucide-react"
-
-type Hackathon = {
-  slug: string
-  title: string
-  status: "upcoming" | "ongoing" | "ended"
-  tags: string[]
-  thumbnailUrl: string
-  period: { timezone: string; submissionDeadlineAt: string; endAt: string }
-  links: { detail: string; rules: string; faq: string }
-}
+import { cn } from "@/lib/utils"
+import type { Hackathon } from "@/types/hackathon"
 
 const STATUS_LABEL: Record<Hackathon["status"], string> = {
   upcoming: "예정",
@@ -62,7 +54,6 @@ export function HackathonCard({ hackathon }: HackathonCardProps) {
         fill
         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         className="object-cover transition-transform duration-500 group-hover:scale-105"
-        unoptimized
       />
 
       {/* Gradient overlay */}
@@ -71,10 +62,10 @@ export function HackathonCard({ hackathon }: HackathonCardProps) {
       {/* Top row: status badge (left) + participant count (right) */}
       <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
         <span
-          className={[
+          className={cn(
             "inline-flex items-center gap-1 rounded-lg border px-3 py-1 text-sm font-semibold backdrop-blur-sm",
             STATUS_BADGE_CLASS[hackathon.status],
-          ].join(" ")}
+          )}
         >
           {STATUS_ICON[hackathon.status]}
           {STATUS_LABEL[hackathon.status]}

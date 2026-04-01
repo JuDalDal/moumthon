@@ -5,24 +5,14 @@ import type React from "react"
 import { Clock, Zap, CheckCircle, RotateCcw } from "lucide-react"
 import hackathonsData from "@/assets/data/public_hackathons.json"
 import { HackathonCard } from "@/components/feature/hackathons/HackathonCard"
-
-type Status = "upcoming" | "ongoing" | "ended"
-
-type Hackathon = {
-  slug: string
-  title: string
-  status: Status
-  tags: string[]
-  thumbnailUrl: string
-  period: { timezone: string; submissionDeadlineAt: string; endAt: string }
-  links: { detail: string; rules: string; faq: string }
-}
+import { cn } from "@/lib/utils"
+import type { Hackathon, HackathonStatus } from "@/types/hackathon"
 
 const hackathons = hackathonsData as Hackathon[]
 
-const STATUS_OPTIONS: { value: Status; label: string; icon: React.ReactNode }[] = [
-  { value: "upcoming", label: "예정",    icon: <Clock   size={14} /> },
-  { value: "ongoing",  label: "진행 중", icon: <Zap     size={14} /> },
+const STATUS_OPTIONS: { value: HackathonStatus; label: string; icon: React.ReactNode }[] = [
+  { value: "upcoming", label: "예정",    icon: <Clock       size={14} /> },
+  { value: "ongoing",  label: "진행 중", icon: <Zap         size={14} /> },
   { value: "ended",    label: "종료",    icon: <CheckCircle size={14} /> },
 ]
 
@@ -31,7 +21,7 @@ const ALL_TAGS = Array.from(new Set(hackathons.flatMap((h) => h.tags))).sort()
 const PAGE_SIZE = 6
 
 export default function HackathonsPage() {
-  const [statusFilter, setStatusFilter] = useState<Status | null>(null)
+  const [statusFilter, setStatusFilter] = useState<HackathonStatus | null>(null)
   const [tagFilters, setTagFilters] = useState<string[]>([])
   const [page, setPage] = useState(1)
 
@@ -48,7 +38,7 @@ export default function HackathonsPage() {
   const currentPage = Math.min(page, totalPages)
   const paged = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
 
-  function toggleStatus(s: Status) {
+  function toggleStatus(s: HackathonStatus) {
     setStatusFilter((prev) => (prev === s ? null : s))
     setPage(1)
   }
@@ -80,12 +70,12 @@ export default function HackathonsPage() {
                 <button
                   key={value}
                   onClick={() => toggleStatus(value)}
-                  className={[
+                  className={cn(
                     "inline-flex items-center gap-1.5 rounded-full px-6 py-1.5 text-sm font-medium border transition-colors",
                     active
                       ? "bg-primary text-primary-foreground border-primary"
                       : "text-foreground border-border hover:bg-accent hover:text-accent-foreground",
-                  ].join(" ")}
+                  )}
                 >
                   {icon}
                   {label}
@@ -95,12 +85,12 @@ export default function HackathonsPage() {
           </div>
           <button
             onClick={() => { setStatusFilter(null); setPage(1) }}
-            className={[
+            className={cn(
               "inline-flex items-center gap-1 text-xs transition-colors px-2 py-1",
               statusFilter
                 ? "text-muted-foreground hover:text-foreground"
                 : "invisible pointer-events-none",
-            ].join(" ")}
+            )}
           >
             <RotateCcw size={11} />
             초기화
@@ -118,12 +108,12 @@ export default function HackathonsPage() {
                 <button
                   key={tag}
                   onClick={() => toggleTag(tag)}
-                  className={[
+                  className={cn(
                     "rounded-full px-5 py-1.5 text-sm font-medium border transition-colors",
                     active
                       ? "bg-primary text-primary-foreground border-primary"
                       : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-accent-foreground",
-                  ].join(" ")}
+                  )}
                 >
                   #{tag}
                 </button>
@@ -132,12 +122,12 @@ export default function HackathonsPage() {
           </div>
           <button
             onClick={() => { setTagFilters([]); setPage(1) }}
-            className={[
+            className={cn(
               "inline-flex items-center gap-1 text-xs transition-colors px-2 py-1 pt-1",
               tagFilters.length > 0
                 ? "text-muted-foreground hover:text-foreground"
                 : "invisible pointer-events-none",
-            ].join(" ")}
+            )}
           >
             <RotateCcw size={11} />
             초기화
@@ -178,12 +168,12 @@ export default function HackathonsPage() {
             <button
               key={p}
               onClick={() => setPage(p)}
-              className={[
+              className={cn(
                 "w-9 h-9 rounded-md text-sm border transition-colors",
                 p === currentPage
                   ? "bg-primary text-primary-foreground border-primary font-medium"
                   : "border-border hover:bg-muted",
-              ].join(" ")}
+              )}
             >
               {p}
             </button>
