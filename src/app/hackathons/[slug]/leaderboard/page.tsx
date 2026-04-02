@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation"
 import hackathonDetailData from "@/assets/data/public_hackathon_detail.json"
 import leaderboardData from "@/assets/data/public_leaderboard.json"
 import type { HackathonDetail, Leaderboard } from "@/types/hackathonDetail"
@@ -23,7 +24,9 @@ export default async function LeaderboardPage({
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params
-  const detail = allDetails.find((d) => d.slug === slug) ?? allDetails[0]
+  const detail = allDetails.find((d) => d.slug === slug)
+  if (!detail) notFound()
+
   const leaderboard =
     allLeaderboards.find((l) => l.hackathonSlug === slug) ?? allLeaderboards[0]
 

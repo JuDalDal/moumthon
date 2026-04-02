@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation"
+import { redirect, notFound } from "next/navigation"
 import hackathonDetailData from "@/assets/data/public_hackathon_detail.json"
 import teamsData from "@/assets/data/public_teams.json"
 import leaderboardData from "@/assets/data/public_leaderboard.json"
@@ -29,7 +29,9 @@ export default async function HackathonSectionPage({
     redirect(`/hackathons/${slug}/overview`)
   }
 
-  const detail = allDetails.find((d) => d.slug === slug) ?? allDetails[0]
+  const detail = allDetails.find((d) => d.slug === slug)
+  if (!detail) notFound()
+
   const teams = (teamsData as Team[]).filter((t) => t.hackathonSlug === slug)
   const leaderboard = allLeaderboards.find((l) => l.hackathonSlug === slug) ?? allLeaderboards[0]
 
