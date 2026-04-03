@@ -2,7 +2,6 @@ export function Breadcrumb({ pathname }: { pathname: string }) {
   const segments = pathname.split("/").filter(Boolean);
 
   const nameMap: Record<string, string> = {
-    explore: "탐색",
     hackathons: "해커톤",
     team: "팀 구성",
     ranking: "랭킹",
