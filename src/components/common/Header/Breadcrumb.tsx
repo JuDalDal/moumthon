@@ -3,7 +3,7 @@ export function Breadcrumb({ pathname }: { pathname: string }) {
 
   const nameMap: Record<string, string> = {
     explore: "탐색",
-    hackathon: "해커톤",
+    hackathons: "해커톤",
     team: "팀 구성",
     ranking: "랭킹",
   };

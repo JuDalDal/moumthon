@@ -20,7 +20,7 @@ const CTA_CONFIG: Record<
     desc: "진행 중인 대회를 확인하고\n지금 바로 참가하세요.",
   },
   team: {
-    href: "/camp",
+    href: "/team",
     icon: "🤝",
     title: "팀 찾기",
     desc: "포지션별로 팀원을 모집하거나\n원하는 팀에 합류하세요.",

@@ -1,4 +1,3 @@
-"use client";
 
 import { CtaButton } from "@/components/feature/CtaButton";
 

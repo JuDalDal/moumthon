@@ -39,6 +39,8 @@ export function Header() {
               <button
                 onClick={() => setOpen(!open)}
                 className="text-sm hover:text-primary"
+                aria-expanded={open}
+                aria-haspopup="true"
               >
                 {nickname}님!
               </button>
