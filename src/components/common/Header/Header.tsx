@@ -4,6 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/common";
+import { useMemberStore } from "@/stores/memberStore";
+import { createLocalStore } from "@/lib/storage";
+import myInitialData from "@/assets/data/my.json";
 import { Nav } from "./Nav";
 import { Breadcrumb } from "./Breadcrumb";
 
@@ -11,19 +14,32 @@ export function Header() {
   const pathname = usePathname();
   const isMain = pathname === "/";
 
-  const [isLogin, setIsLogin] = useState(false);
+  const { member, setMember, clearMember } = useMemberStore();
   const [open, setOpen] = useState(false);
-  const nickname = "현현";
+
+  const handleLogin = () => {
+    const store = createLocalStore<Record<string, unknown>>("my", "userId");
+    store.seed(myInitialData as unknown as Record<string, unknown>[]);
+    const { data } = store.getAll();
+    const session = data?.[0];
+    if (session && typeof session.userId === "string") {
+      setMember({
+        userId: session.userId,
+        nickname: typeof session.displayName === "string" ? session.displayName : session.userId,
+        avatarUrl: typeof session.avatarUrl === "string" ? session.avatarUrl : undefined,
+      });
+    }
+  };
 
   const handleLogout = () => {
-    setIsLogin(false);
+    clearMember();
     setOpen(false);
   };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 h-14 border-b border-border bg-background/80 backdrop-blur-sm">
       <div className="mx-auto flex h-full w-full max-w-7xl items-center justify-between px-4">
-        
+
         <div className="flex items-center gap-4">
           <Link href="/" className="text-base font-semibold hover:text-primary">
             MoumThon
@@ -34,7 +50,7 @@ export function Header() {
         </div>
 
         <div className="relative">
-          {isLogin ? (
+          {member ? (
             <>
               <button
                 onClick={() => setOpen(!open)}
@@ -42,10 +58,9 @@ export function Header() {
                 aria-expanded={open}
                 aria-haspopup="true"
               >
-                {nickname}님!
+                {member.nickname}님!
               </button>
 
-              {/* 드롭다운 */}
               {open && (
                 <div className="absolute right-0 mt-2 w-32 rounded-md border bg-white shadow-md">
                   <Link
@@ -65,7 +80,7 @@ export function Header() {
               )}
             </>
           ) : (
-            <Button size="sm" onClick={() => setIsLogin(true)}>
+            <Button size="sm" onClick={handleLogin}>
               로그인
             </Button>
           )}
