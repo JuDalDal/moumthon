@@ -166,14 +166,13 @@ export default function SubmitClient({ detail, slug, itemKey }: Props) {
       if (selectedToken === "text") artifactContent = values[selectedToken]
       else artifactUrl = values[selectedToken]
     } else if (parsed.mode === "and") {
-      // 복합 제출: note에 모든 값 기록, 첫 번째를 primary로
-      const [first, ...rest] = parsed.tokens
-      artifactType = first
-      if (first === "text") artifactContent = values[first]
-      else artifactUrl = values[first]
-      // 나머지는 note에 포함
-      const extra = rest.map((t) => `${tokenLabel(t)}: ${values[t]}`).join(" | ")
-      artifactContent = artifactContent ? `${artifactContent}\n${extra}` : extra
+      // 복합 제출: 모든 항목을 JSON으로 artifactContent에 저장
+      artifactType = "multi"
+      const structured: Record<string, string> = {}
+      for (const token of parsed.tokens) {
+        structured[token] = values[token]
+      }
+      artifactContent = JSON.stringify(structured)
     } else {
       artifactType = parsed.token
       if (parsed.token === "text") artifactContent = values[parsed.token]

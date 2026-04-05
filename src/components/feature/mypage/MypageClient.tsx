@@ -392,7 +392,18 @@ export default function MypageClient() {
                                   <a href={sub.artifactUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
                                     <ExternalLink size={11} /> 링크
                                   </a>
-                                ) : sub.artifactContent ? (
+                                ) : sub.artifactType === "multi" && sub.artifactContent ? (() => {
+                                  try {
+                                    const parsed = JSON.parse(sub.artifactContent) as Record<string, string>
+                                    return (
+                                      <span className="truncate">
+                                        {Object.entries(parsed).map(([k, v]) => `${k}: ${v}`).join(" | ")}
+                                      </span>
+                                    )
+                                  } catch {
+                                    return <span className="truncate">{sub.artifactContent}</span>
+                                  }
+                                })() : sub.artifactContent ? (
                                   <span className="truncate">{sub.artifactContent}</span>
                                 ) : "—"}
                               </td>
