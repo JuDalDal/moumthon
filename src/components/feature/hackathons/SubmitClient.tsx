@@ -192,6 +192,7 @@ export default function SubmitClient({ detail, slug, itemKey, hackathonStatus }:
       ? mySession.mySubmissions.map((s) => s.hackathonSlug === slug ? { ...s, latestSubmissionId: submissionId, latestScore: simulatedScore } : s)
       : [...mySession.mySubmissions, { hackathonSlug: slug, teamCode: myTeam.teamCode, latestSubmissionId: submissionId, latestScore: simulatedScore }]
     myStore.update(member.userId, { mySubmissions: updatedSubmissions })
+    setNewScore(simulatedScore) 
   }
 
   return (
