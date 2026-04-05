@@ -3,6 +3,7 @@
 import { Trophy, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { formatDate } from "@/lib/formatDate"
+import { RankBadge } from "@/components/common"
 import type { Leaderboard } from "@/types/hackathonDetail"
 
 interface Props {
@@ -61,20 +62,7 @@ export default function LeaderboardClient({ leaderboard, hackathonTitle, note }:
                     )}
                   >
                     <td className="py-4 pl-5 pr-3 text-center">
-                      <span
-                        className={cn(
-                          "inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold",
-                          entry.rank === 1
-                            ? "bg-yellow-400/20 text-yellow-600"
-                            : entry.rank === 2
-                            ? "bg-zinc-200 text-zinc-600"
-                            : entry.rank === 3
-                            ? "bg-orange-200/60 text-orange-600"
-                            : "text-muted-foreground font-normal",
-                        )}
-                      >
-                        {entry.rank}
-                      </span>
+                      <RankBadge rank={entry.rank} />
                     </td>
                     <td className="py-4 px-3 font-medium">{entry.teamName}</td>
                     <td className="py-4 px-3 text-right font-mono text-sm">
