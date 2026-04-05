@@ -50,10 +50,8 @@ export default function HackathonDetailClient({ detail, slug, initialSection, te
     const containerTop = container.getBoundingClientRect().top
     const elTop = el.getBoundingClientRect().top
     container.scrollTo({ top: container.scrollTop + elTop - containerTop - 32, behavior: "smooth" })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Determine initial section on mount (hash > prop > "overview")
   useEffect(() => {
     const hash = window.location.hash.slice(1)
     if (hash === "leaderboard") {
@@ -69,10 +67,8 @@ export default function HackathonDetailClient({ detail, slug, initialSection, te
     setActiveSection(section)
     window.history.replaceState(null, "", `/hackathons/${slug}#${section}`)
     if (section !== "overview") scrollTo(section)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // React to nav scroll requests
   useEffect(() => {
     if (!scrollTarget) return
     if (SECTION_IDS.includes(scrollTarget as SectionId)) {
@@ -82,14 +78,11 @@ export default function HackathonDetailClient({ detail, slug, initialSection, te
       scrollTo(scrollTarget as SectionId)
     }
     clearScrollTarget()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scrollTarget])
 
-  // Scroll spy — most-visible-area wins
   useEffect(() => {
     const container = getContainer()
     if (!container) return
-
     const sections = (hasPrize ? SECTION_IDS : SECTION_IDS.filter((s) => s !== "prize")) as SectionId[]
 
     const handleScroll = () => {
@@ -117,7 +110,6 @@ export default function HackathonDetailClient({ detail, slug, initialSection, te
 
     container.addEventListener("scroll", handleScroll, { passive: true })
     return () => container.removeEventListener("scroll", handleScroll)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug, hasPrize])
 
   const { sections } = detail
@@ -126,13 +118,13 @@ export default function HackathonDetailClient({ detail, slug, initialSection, te
     <div>
       {/* 페이지 헤더 */}
       <div className="mb-12">
-        <h1 className="text-2xl font-bold leading-snug">{detail.title}</h1>
+        <h1 className="text-2xl font-bold leading-snug text-blue-600">{detail.title}</h1>
         <div className="flex gap-3 mt-3">
           <a
             href={sections.info.links.rules}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-blue-600 transition-colors"
           >
             <BookOpen size={14} />
             규칙
@@ -141,7 +133,7 @@ export default function HackathonDetailClient({ detail, slug, initialSection, te
             href={sections.info.links.faq}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-blue-600 transition-colors"
           >
             <HelpCircle size={14} />
             FAQ
@@ -149,7 +141,6 @@ export default function HackathonDetailClient({ detail, slug, initialSection, te
         </div>
       </div>
 
-      {/* 리더보드 뷰 전환 vs 스크롤 섹션 */}
       {activeSection === "leaderboard" ? (
         <HackathonLeaderboardView
           leaderboard={leaderboard}
