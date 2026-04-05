@@ -30,9 +30,10 @@ function CardExternalLink({
 
 interface HackathonCardProps {
   hackathon: Hackathon
+  participantCount?: number
 }
 
-export function HackathonCard({ hackathon }: HackathonCardProps) {
+export function HackathonCard({ hackathon, participantCount = 0 }: HackathonCardProps) {
   const { period, links } = hackathon
   const StatusIcon = STATUS_ICON[hackathon.status]
 
@@ -66,9 +67,12 @@ export function HackathonCard({ hackathon }: HackathonCardProps) {
           {STATUS_LABEL[hackathon.status]}
         </span>
 
-       <span className="inline-flex items-center rounded-lg bg-gradient-to-r from-blue-500 to-green-400 px-3 py-1 text-sm font-bold text-white shadow-md">
-    - 명 참여중!
-  </span>
+        {hackathon.status === "ongoing" && (
+          <span className="inline-flex items-center rounded-lg bg-gradient-to-r from-blue-500 to-green-400 px-3 py-1 text-sm font-bold text-white shadow-md">
+            {participantCount}명 참여중!
+          </span>
+        )}
+
       </div>
 
       {/* 하단 내용 */}

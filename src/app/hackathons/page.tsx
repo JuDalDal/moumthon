@@ -3,12 +3,24 @@
 import { useState, useMemo } from "react"
 import { RotateCcw } from "lucide-react"
 import hackathonsData from "@/assets/data/public_hackathons.json"
+import teamMembersData from "@/assets/data/public_team_members.json"
 import { HackathonCard } from "@/components/feature/hackathons/HackathonCard"
 import { cn } from "@/lib/utils"
 import type { Hackathon, HackathonStatus } from "@/types/hackathon"
 import { STATUS_LABEL, STATUS_ICON } from "@/lib/hackathonStatus"
 
 const hackathons = hackathonsData as Hackathon[]
+
+// 해커톤별 고유 참가자 수 (팀 멤버 데이터 기반)
+const _slugUserSets: Record<string, Set<string>> = {}
+for (const teamEntry of teamMembersData) {
+  const slug = teamEntry.hackathonSlug
+  if (!_slugUserSets[slug]) _slugUserSets[slug] = new Set()
+  for (const m of teamEntry.members) _slugUserSets[slug].add(m.userId)
+}
+const participantCountMap: Record<string, number> = Object.fromEntries(
+  Object.entries(_slugUserSets).map(([slug, set]) => [slug, set.size])
+)
 
 const STATUS_OPTIONS: HackathonStatus[] = ["upcoming", "ongoing", "ended"]
 const ALL_TAGS = Array.from(new Set(hackathons.flatMap((h) => h.tags))).sort()
@@ -105,6 +117,7 @@ export default function HackathonsPage() {
             </button>
           </div>
 
+
           {/* 태그 필터 */}
           <div className="flex flex-wrap items-start gap-3">
             <span className="text-sm font-semibold text-gray-400 mt-1">태그</span>
@@ -163,6 +176,7 @@ export default function HackathonsPage() {
               조건에 맞는 해커톤이 없습니다.
             </div>
           )}
+
 
         </div>
 

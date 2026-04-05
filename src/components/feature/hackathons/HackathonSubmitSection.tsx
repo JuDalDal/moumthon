@@ -4,6 +4,7 @@ import { forwardRef, useState, useEffect } from "react"
 import { Upload, LogIn, CheckCircle2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { HackathonDetail } from "@/types/hackathonDetail"
+import type { HackathonStatus } from "@/types/hackathon"
 import { useMemberStore } from "@/stores/memberStore"
 import { createLocalStore } from "@/lib/storage"
 import { useRouter } from "next/navigation"
@@ -12,6 +13,8 @@ import HackathonSectionHeading from "./HackathonSectionHeading"
 interface Props {
   submit: HackathonDetail["sections"]["submit"]
   slug: string
+  hackathonStatus?: HackathonStatus
+  allowSolo?: boolean
 }
 
 type MyTeam = { hackathonSlug: string; teamCode: string; [key: string]: unknown }
@@ -19,11 +22,14 @@ type MySession = { userId: string; myTeams: MyTeam[]; [key: string]: unknown }
 type Submission = { submissionId: string; itemKey?: string; [key: string]: unknown }
 type TeamSubmissions = { teamCode: string; submissions: Submission[]; [key: string]: unknown }
 
-const HackathonSubmitSection = forwardRef<HTMLElement, Props>(({ submit, slug }, ref) => {
+const HackathonSubmitSection = forwardRef<HTMLElement, Props>(({ submit, slug, hackathonStatus = "upcoming", allowSolo = false }, ref) => {
   const router = useRouter()
   const member = useMemberStore((s) => s.member)
   const [loginDialogOpen, setLoginDialogOpen] = useState(false)
   const [submittedKeys, setSubmittedKeys] = useState<Set<string>>(new Set())
+  const [hasTeam, setHasTeam] = useState(false)
+
+  const isEnded = hackathonStatus === "ended"
 
   const items = submit.submissionItems ?? [{ key: "default", title: "제출하기", format: submit.allowedArtifactTypes[0] ?? "url" }]
 
@@ -31,6 +37,7 @@ const HackathonSubmitSection = forwardRef<HTMLElement, Props>(({ submit, slug },
     if (!member?.userId) { setSubmittedKeys(new Set()); return }
     const { data: session } = createLocalStore<MySession>("my", "userId").getById(member.userId)
     const myTeam = session?.myTeams.find((t) => t.hackathonSlug === slug)
+    setHasTeam(!!myTeam)
     if (!myTeam) return
     const { data: ts } = createLocalStore<TeamSubmissions>("submissions", "teamCode").getById(myTeam.teamCode as string)
     if (!ts) return
@@ -45,6 +52,9 @@ const HackathonSubmitSection = forwardRef<HTMLElement, Props>(({ submit, slug },
     })
     setSubmittedKeys(keys)
   }, [member?.userId, slug])
+
+  // 제출 가능 여부: 로그인 + (팀 있음 OR 개인참가 허용) + 미종료
+  const canSubmit = !!member && (hasTeam || allowSolo) && !isEnded
 
   const handleSubmitClick = (key: string) => {
     if (!member) { setLoginDialogOpen(true); return }
@@ -64,10 +74,29 @@ const HackathonSubmitSection = forwardRef<HTMLElement, Props>(({ submit, slug },
               {type}
             </span>
           ))}
+          {allowSolo && (
+            <span className="rounded-full border border-primary-200 bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
+              개인참가 가능
+            </span>
+          )}
         </div>
+
+
+        {isEnded && (
+          <div className="rounded-lg border border-muted bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+            종료된 해커톤입니다. 제출이 불가합니다.
+          </div>
+        )}
+
+        {!isEnded && member && !hasTeam && !allowSolo && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50/60 px-4 py-3 text-sm text-amber-800">
+            팀에 합류한 후 제출할 수 있습니다.
+          </div>
+        )}
 
         <div data-testid="hackathon-submit-guide" className="rounded-xl border border-gray-200 bg-gray-50 px-5 py-4">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">제출 가이드</p>
+
           <ul className="space-y-2">
             {submit.guide.map((g, i) => (
               <li key={i} className="flex gap-2 text-sm text-gray-700">
@@ -86,12 +115,16 @@ const HackathonSubmitSection = forwardRef<HTMLElement, Props>(({ submit, slug },
               <button
                 key={item.key}
                 data-testid={`hackathon-submit-item-${item.key}`}
-                onClick={() => handleSubmitClick(item.key)}
+                onClick={() => canSubmit ? handleSubmitClick(item.key) : (!member ? setLoginDialogOpen(true) : undefined)}
+                disabled={isEnded || (!hasTeam && !allowSolo)}
                 className={cn(
                   "w-full flex items-center justify-between rounded-xl border px-5 py-3.5 transition-colors group shadow-sm",
                   isDone
                     ? "border-blue-200 bg-blue-50/40"
-                    : "border-gray-200 bg-white hover:border-blue-200 hover:bg-blue-50/30",
+                    : canSubmit
+                       ? "border-blue-200 bg-blue-50/30 hover:bg-blue-50/50"
+                       : "border-gray-200 bg-white opacity-50 cursor-not-allowed",       
+
                 )}
               >
                 <div className="flex items-center gap-3">
