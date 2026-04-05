@@ -45,11 +45,16 @@ type ReceivedInvite = {
   invitedAt: string
 }
 
+type MySubmission = {
+  hackathonSlug: string
+}
+
 type MySession = {
   userId: string
   myTeams: MyTeam[]
   joinRequests: JoinRequest[]
   receivedInvites: ReceivedInvite[]
+  mySubmissions?: MySubmission[]
   [key: string]: unknown
 }
 
