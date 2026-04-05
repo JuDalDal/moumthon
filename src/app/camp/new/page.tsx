@@ -3,6 +3,7 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import hackathonDetailData from "@/assets/data/public_hackathon_detail.json";
+import hackathonsData from "@/assets/data/public_hackathons.json";
 
 type HackathonDetail = { slug: string; sections: { overview: { teamPolicy: { maxTeamSize: number } } }; extraDetails?: HackathonDetail[] };
 
@@ -27,11 +28,7 @@ function isValidUrl(url: string): boolean {
   }
 }
 
-const HACKATHONS = [
-  { slug: "aimers-8-model-lite", title: "Aimers 8기 : 모델 경량화 온라인 해커톤" },
-  { slug: "monthly-vibe-coding-2026-02", title: "월간 해커톤 : 바이브 코딩 개선 AI 아이디어 공모전 (2026.02)" },
-  { slug: "daker-handover-2026-03", title: "긴급 인수인계 해커톤: 명세서만 보고 구현하라" },
-];
+const hackathons = hackathonsData as { slug: string; title: string }[];
 
 function CampNewContent() {
   const router = useRouter();
@@ -135,7 +132,7 @@ function CampNewContent() {
                 className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
               >
                 <option value="">해커톤 선택</option>
-                {HACKATHONS.map((h) => (
+                {hackathons.map((h) => (
                   <option key={h.slug} value={h.slug}>
                     {h.title}
                   </option>
