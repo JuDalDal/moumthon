@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import {
   Trophy, Send, Users, Bell, Check, X,
@@ -104,68 +104,79 @@ const NOTIF_TYPE_LABEL: Record<string, string> = {
   team_invite: "팀 초대",
 }
 
-// ── Component ─────────────────────────────────────────────────
+// ── Data helpers ──────────────────────────────────────────────
+type PageData = {
+  session: MySession
+  invites: ReceivedInvite[]
+  notifications: Notification[]
+  teamSubmissionsMap: Record<string, TeamSubmissions>
+}
+
+/** Pure read — no side effects, safe to call in useMemo */
+function readPageData(userId: string): PageData | null {
+  const { data } = createLocalStore<MySession>("my", "userId").getById(userId)
+  if (!data) return null
+
+  const { data: notifData } = createLocalStore<Notification>("notifications", "notificationId").getAll()
+  const notifications = (notifData ?? []).map((n) => ({ ...n, isRead: true }))
+
+  const submissionsStore = createLocalStore<TeamSubmissions>("submissions", "teamCode")
+  const teamSubmissionsMap: Record<string, TeamSubmissions> = {}
+  for (const t of data.myTeams) {
+    const { data: ts } = submissionsStore.getById(t.teamCode)
+    if (ts) teamSubmissionsMap[t.teamCode] = ts
+  }
+
+  return { session: data, invites: data.receivedInvites ?? [], notifications, teamSubmissionsMap }
+}
+
+/** Write-only side effect — marks notifications as read in localStorage */
+function persistNotificationsRead(userId: string, updateMember: (patch: Record<string, unknown>) => void) {
+  const myStore = createLocalStore<MySession>("my", "userId")
+  const notifStore = createLocalStore<Notification>("notifications", "notificationId")
+  const { data } = myStore.getById(userId)
+  const { data: notifData } = notifStore.getAll()
+  const allNotifs = notifData ?? []
+  const hasUnread = allNotifs.some((n) => !n.isRead)
+  if (hasUnread) {
+    notifStore.setAll(allNotifs.map((n) => ({ ...n, isRead: true })))
+    myStore.update(userId, { notifications: { listUrl: data?.notifications?.listUrl ?? "", unreadCount: 0 } })
+    updateMember({ unreadCount: 0 })
+  }
+}
+
 export default function MypageClient() {
   const { member, updateMember } = useMemberStore()
+  const [refreshKey, setRefreshKey] = useState(0)
+  const refresh = () => setRefreshKey((k) => k + 1)
 
-  const [session, setSession] = useState<MySession | null>(null)
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [teamSubmissionsMap, setTeamSubmissionsMap] = useState<Record<string, TeamSubmissions>>({})
-  const [invites, setInvites] = useState<ReceivedInvite[]>([])
+  const pageData = useMemo<PageData | null>(() => {
+    if (typeof window === "undefined" || !member?.userId) return null
+    return readPageData(member.userId)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [member?.userId, refreshKey])
 
+  // Write side effect only — no setState
   useEffect(() => {
     if (!member?.userId) return
-
-    const myStore = createLocalStore<MySession>("my", "userId")
-    const { data } = myStore.getById(member.userId)
-    if (!data) return
-    setSession(data)
-    setInvites(data.receivedInvites ?? [])
-
-    // Load notifications and mark all as read
-    const notifStore = createLocalStore<Notification>("notifications", "notificationId")
-    const { data: notifData } = notifStore.getAll()
-    const allNotifs = notifData ?? []
-    setNotifications(allNotifs)
-
-    const hasUnread = allNotifs.some((n) => !n.isRead)
-    if (hasUnread) {
-      allNotifs.filter((n) => !n.isRead).forEach((n) => {
-        notifStore.update(n.notificationId, { isRead: true })
-      })
-      myStore.update(member.userId, {
-        notifications: { ...data.notifications, unreadCount: 0 },
-      })
-      updateMember({ unreadCount: 0 })
-      setNotifications(allNotifs.map((n) => ({ ...n, isRead: true })))
-    }
-
-    // Load submissions for my teams
-    const submissionsStore = createLocalStore<TeamSubmissions>("submissions", "teamCode")
-    const map: Record<string, TeamSubmissions> = {}
-    for (const t of data.myTeams) {
-      const { data: ts } = submissionsStore.getById(t.teamCode)
-      if (ts) map[t.teamCode] = ts
-    }
-    setTeamSubmissionsMap(map)
+    persistNotificationsRead(member.userId, updateMember as (patch: Record<string, unknown>) => void)
   }, [member?.userId, updateMember])
+
+  const session = pageData?.session ?? null
+  const invites = pageData?.invites ?? []
+  const notifications = pageData?.notifications ?? []
+  const teamSubmissionsMap = pageData?.teamSubmissionsMap ?? {}
 
   const handleAcceptInvite = (invite: ReceivedInvite) => {
     if (!member?.userId || !session) return
     const myStore = createLocalStore<MySession>("my", "userId")
-    const newTeam: MyTeam = {
-      hackathonSlug: invite.hackathonSlug,
-      teamCode: invite.teamCode,
-      teamName: invite.teamName,
-      role: "member",
-    }
+    const newTeam: MyTeam = { hackathonSlug: invite.hackathonSlug, teamCode: invite.teamCode, teamName: invite.teamName, role: "member" }
     const updatedInvites = (session.receivedInvites ?? []).map((i) =>
       i.inviteId === invite.inviteId ? { ...i, status: "accepted" as const } : i,
     )
     const updatedMyTeams = [...session.myTeams, newTeam]
     myStore.update(member.userId, { receivedInvites: updatedInvites, myTeams: updatedMyTeams })
-    setSession((prev) => prev ? { ...prev, myTeams: updatedMyTeams } : prev)
-    setInvites((prev) => prev.map((i) => i.inviteId === invite.inviteId ? { ...i, status: "accepted" } : i))
+    refresh()
   }
 
   const handleRejectInvite = (inviteId: string) => {
@@ -175,7 +186,7 @@ export default function MypageClient() {
       i.inviteId === inviteId ? { ...i, status: "rejected" as const } : i,
     )
     myStore.update(member.userId, { receivedInvites: updatedInvites })
-    setInvites((prev) => prev.map((i) => i.inviteId === inviteId ? { ...i, status: "rejected" } : i))
+    refresh()
   }
 
   if (!member) {
