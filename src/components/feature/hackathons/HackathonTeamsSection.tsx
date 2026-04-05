@@ -1,9 +1,11 @@
 "use client"
 
 import { forwardRef, useState, useEffect, useCallback } from "react"
-import { Users, Clock, Check, X } from "lucide-react"
+import Link from "next/link"
+import { Users, Clock, Check, X, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { HackathonDetail } from "@/types/hackathonDetail"
+import type { HackathonStatus } from "@/types/hackathon"
 import type { Team } from "@/types/team"
 import { useMemberStore } from "@/stores/memberStore"
 import { createLocalStore } from "@/lib/storage"
@@ -13,6 +15,8 @@ interface Props {
   teamsSection: HackathonDetail["sections"]["teams"]
   teams: Team[]
   slug: string
+  hackathonStatus?: HackathonStatus
+  allowSolo?: boolean
 }
 
 type MyTeam = {
@@ -41,18 +45,25 @@ type ReceivedInvite = {
   invitedAt: string
 }
 
+type MySubmission = {
+  hackathonSlug: string
+}
+
 type MySession = {
   userId: string
   myTeams: MyTeam[]
   joinRequests: JoinRequest[]
   receivedInvites: ReceivedInvite[]
+  mySubmissions?: MySubmission[]
   [key: string]: unknown
 }
 
-const HackathonTeamsSection = forwardRef<HTMLElement, Props>(({ teamsSection, teams, slug }, ref) => {
+const HackathonTeamsSection = forwardRef<HTMLElement, Props>(({ teamsSection, teams, slug, hackathonStatus = "upcoming", allowSolo = false }, ref) => {
   const member = useMemberStore((s) => s.member)
 
+  const isEnded = hackathonStatus === "ended"
   const [myTeam, setMyTeam] = useState<MyTeam | null>(null)
+  const [hasSubmission, setHasSubmission] = useState(false)
   const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([])
   const [receivedInvites, setReceivedInvites] = useState<ReceivedInvite[]>([])
   const [joinCautionTarget, setJoinCautionTarget] = useState<Team | null>(null)
@@ -67,6 +78,7 @@ const HackathonTeamsSection = forwardRef<HTMLElement, Props>(({ teamsSection, te
     const { data } = createLocalStore<MySession>("my", "userId").getById(member.userId)
     if (!data) return
     setMyTeam(data.myTeams.find((t) => t.hackathonSlug === slug) ?? null)
+    setHasSubmission((data.mySubmissions ?? []).some((s: { hackathonSlug: string }) => s.hackathonSlug === slug))
     setJoinRequests((data.joinRequests ?? []).filter((r) => r.hackathonSlug === slug))
     setReceivedInvites((data.receivedInvites ?? []).filter((i) => i.hackathonSlug === slug))
   }, [member?.userId, slug])
@@ -190,6 +202,27 @@ const HackathonTeamsSection = forwardRef<HTMLElement, Props>(({ teamsSection, te
           </div>
         )}
 
+        {/* 종료 / 제출 완료 안내 */}
+        {(isEnded || hasSubmission) && (
+          <div className="rounded-lg border border-muted bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+            {isEnded
+              ? "종료된 해커톤입니다. 팀 만들기·초대·합류가 불가합니다."
+              : "제출을 완료했습니다. 팀 만들기·초대·합류가 불가합니다."}
+          </div>
+        )}
+
+        {/* 팀 만들기 버튼 */}
+        {!myTeam && !isEnded && !hasSubmission && member && (
+          <Link
+            href={`/camp/new?hackathon=${slug}`}
+            data-testid="hackathon-teams-create-btn"
+            className="inline-flex items-center gap-2 rounded-lg border border-primary-200 bg-primary-50/60 px-4 py-2.5 text-sm font-medium text-primary-700 hover:bg-primary-100 transition-colors"
+          >
+            <Plus size={14} />
+            팀 만들기
+          </Link>
+        )}
+
         {/* 팀 목록 */}
         {teams.length > 0 ? (
           <div className="grid grid-cols-2 gap-3">
@@ -197,6 +230,7 @@ const HackathonTeamsSection = forwardRef<HTMLElement, Props>(({ teamsSection, te
               const request = joinRequests.find((r) => r.teamCode === team.teamCode)
               const invite = receivedInvites.find((i) => i.teamCode === team.teamCode)
               const isMyTeam = myTeam?.teamCode === team.teamCode
+              const actionsBlocked = isEnded || hasSubmission
 
               return (
                 <div
@@ -235,6 +269,8 @@ const HackathonTeamsSection = forwardRef<HTMLElement, Props>(({ teamsSection, te
                       <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">
                         내 팀
                       </span>
+                    ) : actionsBlocked ? (
+                      null
                     ) : invite?.status === "pending" ? (
                       <div className="flex items-center gap-1.5">
                         <span className="text-xs text-amber-700 font-medium mr-0.5">초대받음</span>
