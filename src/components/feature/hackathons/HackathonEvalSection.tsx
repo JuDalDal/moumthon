@@ -9,7 +9,7 @@ interface Props {
 
 const HackathonEvalSection = forwardRef<HTMLElement, Props>(({ eval: evalSection }, ref) => {
   return (
-    <section ref={ref} id="eval">
+    <section ref={ref} id="eval" data-testid="hackathon-section-eval">
       <HackathonSectionHeading icon={CheckCircle2}>평가</HackathonSectionHeading>
       <div className="space-y-4">
         <div className="rounded-lg border border-border bg-card p-5">

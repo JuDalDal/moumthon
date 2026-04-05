@@ -10,7 +10,7 @@ interface Props {
 
 const HackathonOverviewSection = forwardRef<HTMLElement, Props>(({ overview, info }, ref) => {
   return (
-    <section ref={ref} id="overview">
+    <section ref={ref} id="overview" data-testid="hackathon-section-overview">
       <HackathonSectionHeading icon={FileText}>개요</HackathonSectionHeading>
       <div className="space-y-6">
         <p className="text-base leading-relaxed text-foreground">{overview.summary}</p>

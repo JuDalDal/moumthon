@@ -52,7 +52,7 @@ const HackathonSubmitSection = forwardRef<HTMLElement, Props>(({ submit, slug },
   }
 
   return (
-    <section ref={ref} id="submit">
+    <section ref={ref} id="submit" data-testid="hackathon-section-submit">
       <HackathonSectionHeading icon={Upload}>제출</HackathonSectionHeading>
       <div className="space-y-4">
         <div className="flex flex-wrap gap-2">
@@ -66,7 +66,7 @@ const HackathonSubmitSection = forwardRef<HTMLElement, Props>(({ submit, slug },
           ))}
         </div>
 
-        <div className="rounded-lg border border-border bg-card px-5 py-4">
+        <div data-testid="hackathon-submit-guide" className="rounded-lg border border-border bg-card px-5 py-4">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">제출 가이드</p>
           <ul className="space-y-2">
             {submit.guide.map((g, i) => (
@@ -85,6 +85,7 @@ const HackathonSubmitSection = forwardRef<HTMLElement, Props>(({ submit, slug },
             return (
               <button
                 key={item.key}
+                data-testid={`hackathon-submit-item-${item.key}`}
                 onClick={() => handleSubmitClick(item.key)}
                 className={cn(
                   "w-full flex items-center justify-between rounded-lg border px-5 py-3.5 transition-colors group",

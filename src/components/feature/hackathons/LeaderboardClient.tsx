@@ -38,7 +38,7 @@ export default function LeaderboardClient({ leaderboard, hackathonTitle, note }:
             아직 제출된 결과가 없습니다.
           </div>
         ) : (
-          <table className="w-full text-sm">
+          <table data-testid="hackathon-leaderboard-table" className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/10 text-xs text-muted-foreground uppercase tracking-wide">
                 <th className="text-center py-3 pl-5 pr-3 w-12">순위</th>
@@ -52,25 +52,38 @@ export default function LeaderboardClient({ leaderboard, hackathonTitle, note }:
             </thead>
             <tbody>
               {leaderboard.entries.map((entry, i) => {
-                const isTop3 = entry.rank <= 3
+                const isNoSubmission = entry.status === "no-submission"
+                const isTop3 = !isNoSubmission && entry.rank <= 3
+                const rowKey = entry.teamName.toLowerCase().replace(/\s+/g, "-")
                 return (
                   <tr
                     key={i}
+                    data-testid={`hackathon-leaderboard-row-${rowKey}`}
                     className={cn(
                       "border-b border-border last:border-0 transition-colors",
                       isTop3 ? "bg-primary-50/50" : "hover:bg-muted/20",
                     )}
                   >
                     <td className="py-4 pl-5 pr-3 text-center">
-                      <RankBadge rank={entry.rank} />
+                      {isNoSubmission ? (
+                        <span className="text-xs text-muted-foreground">-</span>
+                      ) : (
+                        <RankBadge rank={entry.rank} />
+                      )}
                     </td>
                     <td className="py-4 px-3 font-medium">{entry.teamName}</td>
                     <td className="py-4 px-3 text-right font-mono text-sm">
-                      <span className={cn("font-semibold", isTop3 ? "text-primary-600" : "text-foreground")}>
-                        {typeof entry.score === "number" && entry.score < 1
-                          ? entry.score.toFixed(4)
-                          : entry.score.toFixed(1)}
-                      </span>
+                      {isNoSubmission ? (
+                        <span data-testid={`hackathon-leaderboard-no-submission-${rowKey}`} className="text-xs text-muted-foreground">
+                          미제출
+                        </span>
+                      ) : (
+                        <span data-testid={`hackathon-leaderboard-score-${rowKey}`} className={cn("font-semibold", isTop3 ? "text-primary-600" : "text-foreground")}>
+                          {typeof entry.score === "number" && entry.score < 1
+                            ? entry.score.toFixed(4)
+                            : entry.score.toFixed(1)}
+                        </span>
+                      )}
                     </td>
                     {leaderboard.entries.some((e) => e.scoreBreakdown) && (
                       <td className="py-4 px-3 text-right text-xs text-muted-foreground hidden sm:table-cell">
@@ -82,7 +95,7 @@ export default function LeaderboardClient({ leaderboard, hackathonTitle, note }:
                       </td>
                     )}
                     <td className="py-4 pl-3 pr-5 text-right text-xs text-muted-foreground">
-                      {formatDate(entry.submittedAt, "Asia/Seoul")}
+                      {isNoSubmission ? "-" : formatDate(entry.submittedAt, "Asia/Seoul")}
                     </td>
                   </tr>
                 )
