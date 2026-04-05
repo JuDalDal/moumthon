@@ -1,18 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { TeamCard } from "@/components/feature/team/TeamCard";
 import { MyTeamCard, MyTeam } from "@/components/feature/team/MyTeamCard";
 import teamsData from "@/assets/data/public_teams.json";
 import teamMembersData from "@/assets/data/public_team_members.json";
-
 import sessionData from "@/assets/data/my.json";
+import hackathonsData from "@/assets/data/public_hackathons.json";
 
 type StatusFilter = "all" | "recruiting" | "closed";
 type TypeFilter = "all" | "hackathon" | "open";
 
-// JSON 타입 정의
 type RawTeam = {
   teamCode: string;
   hackathonSlug: string;
@@ -39,15 +38,29 @@ type RawTeamMembers = {
   members: RawMember[];
 };
 
+type RawHackathon = {
+  slug: string;
+  title: string;
+  status: string;
+};
+
 export default function TeamPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // URL에서 해커톤 슬러그 읽기
+  const hackathonFilter = searchParams.get("hackathon");
 
   const session = (sessionData as any[])[0];
   const myTeamCodes = session?.myTeams?.map((t: any) => t.teamCode) ?? [];
 
-  // 멤버 조회 헬퍼
+  // 진행 중인 해커톤만 필터 옵션으로 표시
+  const activeHackathons = (hackathonsData as RawHackathon[]).filter(
+    (h) => h.status === "ongoing" || h.status === "upcoming"
+  );
+
   const getMembersForTeam = (teamCode: string) => {
     const found = (teamMembersData as RawTeamMembers[]).find(
       (tm) => tm.teamCode === teamCode
@@ -55,7 +68,6 @@ export default function TeamPage() {
     return found?.members ?? [];
   };
 
-  // 내 팀 목록 (session.myTeams 기준)
   const myTeams: MyTeam[] = session?.myTeams?.map((myTeam: any) => {
     const raw = (teamsData as RawTeam[]).find(
       (t) => t.teamCode === myTeam.teamCode
@@ -78,19 +90,37 @@ export default function TeamPage() {
     };
   }) ?? [];
 
-  // 전체 팀 목록 (내 팀 제외)
   const otherTeams = (teamsData as RawTeam[]).filter(
     (t) => !myTeamCodes.includes(t.teamCode)
   );
 
-  const filteredTeams = otherTeams.filter((team) => {
-    const statusMatch =
-      statusFilter === "all" ||
-      (statusFilter === "recruiting" && team.isOpen) ||
-      (statusFilter === "closed" && !team.isOpen);
-    const typeMatch = typeFilter === "all" || typeFilter === "hackathon";
-    return statusMatch && typeMatch;
-  });
+  const filteredTeams = useMemo(() => {
+    return otherTeams.filter((team) => {
+      const statusMatch =
+        statusFilter === "all" ||
+        (statusFilter === "recruiting" && team.isOpen) ||
+        (statusFilter === "closed" && !team.isOpen);
+      const typeMatch = typeFilter === "all" || typeFilter === "hackathon";
+      const hackathonMatch =
+        !hackathonFilter || team.hackathonSlug === hackathonFilter;
+      return statusMatch && typeMatch && hackathonMatch;
+    });
+  }, [otherTeams, statusFilter, typeFilter, hackathonFilter]);
+
+  // 해커톤 필터 변경 — URL 쿼리 업데이트
+  const handleHackathonFilter = (slug: string | null) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (slug) {
+      params.set("hackathon", slug);
+    } else {
+      params.delete("hackathon");
+    }
+    router.push(`/camp?${params.toString()}`);
+  };
+
+  const selectedHackathon = activeHackathons.find(
+    (h) => h.slug === hackathonFilter
+  );
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-white via-blue-50 to-green-50 px-4 py-16">
@@ -106,7 +136,7 @@ export default function TeamPage() {
             </p>
           </div>
           <button
-            onClick={() => router.push("/team/new")}
+            onClick={() => router.push("/camp/new")}
             className="rounded-xl bg-gradient-to-r from-blue-500 to-green-400 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:scale-105"
           >
             + 팀 만들기
@@ -124,19 +154,15 @@ export default function TeamPage() {
                 <MyTeamCard
                   key={team.teamCode}
                   team={team}
-                  onUpdate={(updated) => {
-                    // TODO: API 연결
-                    console.log("update", updated);
-                  }}
-                  onDelete={() => {
-                    // TODO: API 연결
-                    console.log("delete", team.teamCode);
-                  }}
+                  onUpdate={(updated) => console.log("update", updated)}
+                  onDelete={() => console.log("delete", team.teamCode)}
                 />
               ))}
             </div>
           </div>
         )}
+
+
 
         {/* 모집 여부 필터 */}
         <div className="mb-3 flex gap-2 text-sm">
@@ -175,6 +201,51 @@ export default function TeamPage() {
             </button>
           ))}
         </div>
+
+               {/* 해커톤 필터 */}
+{activeHackathons.length > 0 && (
+  <div className="mb-6 flex flex-col gap-2">
+    <p className="text-xs font-bold uppercase tracking-widest text-gray-400">
+      해커톤
+    </p>
+
+    <div className="relative w-full max-w-xs">
+      <select
+        value={hackathonFilter ?? ""}
+        onChange={(e) =>
+          handleHackathonFilter(e.target.value || null)
+        }
+        className="w-full appearance-none rounded-xl border border-gray-200 bg-white/80 backdrop-blur px-4 py-2 pr-10 text-sm text-gray-700 shadow-sm transition focus:border-blue-400 focus:outline-none hover:border-blue-300"
+      >
+        <option value="">전체</option>
+        {activeHackathons.map((h) => (
+          <option key={h.slug} value={h.slug}>
+            {h.title}
+          </option>
+        ))}
+      </select>
+
+      {/* 드롭다운 화살표 */}
+      <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
+        ▼
+      </div>
+    </div>
+  </div>
+)}
+
+        {/* 선택된 해커톤 표시 */}
+        {selectedHackathon && (
+          <div className="mb-6 flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50 px-4 py-2.5">
+            <span className="text-xs font-semibold text-blue-600">🏆 {selectedHackathon.title}</span>
+            <span className="text-xs text-blue-400">해커톤의 팀 목록</span>
+            <button
+              onClick={() => handleHackathonFilter(null)}
+              className="ml-auto text-xs text-blue-400 hover:text-blue-600 transition-colors"
+            >
+              ✕ 필터 해제
+            </button>
+          </div>
+        )}
 
         {/* 카드 리스트 */}
         {filteredTeams.length > 0 ? (
