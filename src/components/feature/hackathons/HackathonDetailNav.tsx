@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation"
 import { ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useHackathonDetailStore } from "@/stores/hackathonDetailStore"
-import type { ScheduleMilestone } from "@/types/hackathonDetail"
+import type { SubmissionItem } from "@/types/hackathonDetail"
 
 const SCROLL_NAV_ITEMS = [
   { id: "overview", label: "개요" },
@@ -21,10 +21,10 @@ type ScrollSectionId = (typeof SCROLL_NAV_ITEMS)[number]["id"]
 interface Props {
   slug: string
   hasPrize: boolean
-  milestones: ScheduleMilestone[]
+  submissionItems: SubmissionItem[]
 }
 
-export default function HackathonDetailNav({ slug, hasPrize, milestones }: Props) {
+export default function HackathonDetailNav({ slug, hasPrize, submissionItems }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const { activeSection, setActiveSection, requestScroll } = useHackathonDetailStore()
@@ -108,13 +108,13 @@ export default function HackathonDetailNav({ slug, hasPrize, milestones }: Props
                     "bg-card border border-border rounded-lg shadow-lg z-20 py-1",
                   )}
                 >
-                  {milestones.map((milestone, i) => (
+                  {submissionItems.map((item) => (
                     <button
-                      key={i}
-                      onClick={() => handleSubmitItemClick(String(i))}
+                      key={item.key}
+                      onClick={() => handleSubmitItemClick(item.key)}
                       className="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-muted/60 transition-colors"
                     >
-                      {milestone.name}
+                      {item.title}
                     </button>
                   ))}
                 </div>

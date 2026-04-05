@@ -22,7 +22,7 @@ export default async function HackathonSlugLayout({
         <HackathonDetailNav
           slug={slug}
           hasPrize={!!detail.sections.prize}
-          milestones={detail.sections.schedule.milestones}
+          submissionItems={detail.sections.submit.submissionItems ?? [{ key: "default", title: "제출하기", format: detail.sections.submit.allowedArtifactTypes[0] ?? "url" }]}
         />
       </div>
       <div id="hackathon-content" className="scroll-overlay flex-1 min-w-0 py-8 pl-16">

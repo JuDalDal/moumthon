@@ -181,12 +181,11 @@ export default function HackathonDetailClient({ detail, slug, initialSection, te
             ref={sectionRefs.teams}
             teamsSection={sections.teams}
             teams={teams}
+            slug={slug}
           />
           <HackathonSubmitSection
             ref={sectionRefs.submit}
             submit={sections.submit}
-            milestones={sections.schedule.milestones}
-            timezone={sections.schedule.timezone}
             slug={slug}
           />
         </div>

@@ -2,9 +2,10 @@ import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
 type Member = {
-  userId: string
+  userId?: string
   nickname: string
   avatarUrl?: string
+  unreadCount?: number
 }
 
 type MemberStore = {
