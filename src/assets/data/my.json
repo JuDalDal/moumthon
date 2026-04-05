@@ -32,6 +32,18 @@
         "latestScore": 87.5
       }
     ],
+    "joinRequests": [],
+    "receivedInvites": [
+      {
+        "inviteId": "INV-001",
+        "hackathonSlug": "aimers-8-model-lite",
+        "teamCode": "T-ALPHA",
+        "teamName": "Team Alpha",
+        "fromDisplayName": "Team Alpha 팀장",
+        "status": "pending",
+        "invitedAt": "2026-02-19T09:00:00+09:00"
+      }
+    ],
     "notifications": {
       "unreadCount": 2,
       "listUrl": "/my/notifications"
