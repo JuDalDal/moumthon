@@ -17,7 +17,7 @@ interface Props {
 type MyTeam = { hackathonSlug: string; teamCode: string; teamName: string; role: string }
 type MySubmissionSummary = { hackathonSlug: string; teamCode: string; latestSubmissionId: string; latestScore: number }
 type MySession = { userId: string; displayName: string; myTeams: MyTeam[]; mySubmissions: MySubmissionSummary[]; [key: string]: unknown }
-type Submission = { submissionId: string; submittedAt: string; artifactType: string; artifactUrl?: string; artifactContent?: string; score?: number; status: string; note?: string; isBest?: boolean }
+type Submission = { submissionId: string; itemKey?: string; submittedAt: string; artifactType: string; artifactUrl?: string; artifactContent?: string; score?: number; status: string; note?: string; isBest?: boolean }
 type TeamSubmissions = { hackathonSlug: string; teamCode: string; teamName: string; submissions: Submission[]; [key: string]: unknown }
 type LeaderboardEntry = { rank: number; teamName: string; score: number; submittedAt: string; [key: string]: unknown }
 type LeaderboardRecord = { hackathonSlug: string; updatedAt: string; entries: LeaderboardEntry[]; [key: string]: unknown }
