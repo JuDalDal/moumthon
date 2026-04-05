@@ -1,14 +1,33 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { TeamCard } from "@/components/feature/team/TeamCard";
+import { MyTeamCard, MyTeam } from "@/components/feature/team/MyTeamCard";
 
 type StatusFilter = "all" | "recruiting" | "closed";
 type TypeFilter = "all" | "hackathon" | "open";
 
+const INITIAL_MY_TEAM: MyTeam = {
+  title: "AI 해커톤 팀",
+  description: "AI 기반 서비스를 함께 만들 팀원을 모집합니다.",
+  teamType: "hackathon",
+  status: "recruiting",
+  positions: ["프론트엔드", "백엔드", "AI/ML"],
+  members: [
+    { id: 1, image: "/p1.png", name: "김철수" },
+    { id: 2, image: "/p2.png", name: "이영희" },
+    { id: 3, image: "/p3.png", name: "박민준" },
+    { id: 4, image: "/p4.png", name: "최지수" },
+  ],
+  maxMembers: 5,
+};
+
 export default function TeamPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+  const [myTeam, setMyTeam] = useState<MyTeam | null>(INITIAL_MY_TEAM);
+  const router = useRouter();
 
   const teams = [
     {
@@ -84,6 +103,7 @@ export default function TeamPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-white via-blue-50 to-green-50 px-4 py-16">
       <div className="mx-auto w-full max-w-6xl">
+
         {/* 헤더 */}
         <div className="mb-10 flex items-end justify-between">
           <div>
@@ -93,10 +113,25 @@ export default function TeamPage() {
               다양한 팀을 탐색하고, 원하는 팀에 참여하거나 직접 팀을 만들어보세요.
             </p>
           </div>
-          <button className="rounded-xl bg-gradient-to-r from-blue-500 to-green-400 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:scale-105">
+          <button
+            onClick={() => router.push("/team/new")}
+            className="rounded-xl bg-gradient-to-r from-blue-500 to-green-400 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:scale-105"
+          >
             + 팀 만들기
           </button>
         </div>
+
+        {/* My Team 섹션 */}
+        {myTeam && (
+          <div className="mb-10">
+            <p className="mb-3 text-xs font-bold uppercase tracking-widest text-gray-400">My Team</p>
+            <MyTeamCard
+              team={myTeam}
+              onUpdate={(updated) => setMyTeam((prev) => prev ? { ...prev, ...updated } : prev)}
+              onDelete={() => setMyTeam(null)}
+            />
+          </div>
+        )}
 
         {/* 모집 여부 필터 */}
         <div className="mb-3 flex gap-2 text-sm">
