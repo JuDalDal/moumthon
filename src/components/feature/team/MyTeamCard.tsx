@@ -3,12 +3,13 @@
 import { useState } from "react";
 
 interface Member {
-  id: number;
+  id: string | number;
   image: string;
   name?: string;
 }
 
 export interface MyTeam {
+  teamCode: string;
   title: string;
   description: string;
   teamType: "hackathon" | "open";
@@ -16,9 +17,9 @@ export interface MyTeam {
   members: Member[];
   maxMembers: number;
   positions: string[];
+  contactUrl?: string;
 }
 
-// 삭제 확인 모달
 function DeleteModal({
   teamName,
   onConfirm,
@@ -54,7 +55,7 @@ function DeleteModal({
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white hover:bg-red-700 transition-colors"
+            className="flex-1 rounded-xl bg-red-500 py-2.5 text-sm font-semibold text-white hover:bg-red-600 transition-colors"
           >
             삭제하기
           </button>
@@ -64,7 +65,6 @@ function DeleteModal({
   );
 }
 
-// 수정 모달
 function EditModal({
   team,
   onSave,
@@ -129,7 +129,6 @@ function EditModal({
   );
 }
 
-// My Team 가로 카드
 export function MyTeamCard({
   team,
   onUpdate,
@@ -153,10 +152,8 @@ export function MyTeamCard({
         <div className="flex flex-col gap-4">
 
           {/* 상단: 팀 정보 + 모집 토글 */}
-          <div className="flex items-center justify-between gap-4">
-
-            {/* 왼쪽: 팀 유형 + 팀명 + 설명 */}
-            <div className="flex flex-1 min-w-0 flex-col gap-1">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex min-w-0 flex-col gap-1">
               <div className="flex items-center gap-1.5">
                 <span className="text-sm">{team.teamType === "hackathon" ? "🏆" : "🔓"}</span>
                 <span className={`text-xs font-semibold ${team.teamType === "hackathon" ? "text-blue-600" : "text-amber-600"}`}>
@@ -167,43 +164,34 @@ export function MyTeamCard({
               <p className="text-sm text-gray-500">{team.description}</p>
             </div>
 
-            {/* 오른쪽 상단: 모집 여부 토글 */}
+            {/* 모집 여부 토글 */}
             <div className="flex shrink-0 items-center gap-2">
-                {/* 상태 텍스트 (클릭 X) */}
+              <span className={`text-xs font-semibold ${isRecruiting ? "text-green-600" : "text-gray-400"}`}>
+                {isRecruiting ? "모집 중" : "모집 마감"}
+              </span>
+              <input
+                type="checkbox"
+                id={`toggle-${team.teamCode}`}
+                checked={isRecruiting}
+                onChange={() => onUpdate({ status: isRecruiting ? "closed" : "recruiting" })}
+                className="hidden"
+              />
+              <label
+                htmlFor={`toggle-${team.teamCode}`}
+                className={`relative block h-6 w-11 cursor-pointer rounded-full transition-colors duration-300 ${
+                  isRecruiting ? "bg-green-400" : "bg-gray-300"
+                }`}
+              >
                 <span
-                    className={`text-xs font-semibold ${
-                    isRecruiting ? "text-green-600" : "text-gray-400"
-                    }`}
-                >
-                    {isRecruiting ? "모집 중" : "모집 마감"}
-                </span>
-
-                {/* 토글 버튼 */}
-             <div className="flex items-center gap-2">
-  <input
-    type="checkbox"
-    id="recruit-toggle"
-    checked={isRecruiting}
-    onChange={() => onUpdate({ status: isRecruiting ? "closed" : "recruiting" })}
-    className="hidden"
-  />
-  <label
-    htmlFor="recruit-toggle"
-    className={`relative block h-6 w-10 cursor-pointer rounded-full transition-colors duration-300 ${
-      isRecruiting ? "bg-green-400" : "bg-gray-300"
-    }`}
-  >
-    <span
-      className={`absolute top-[2px] left-[2px] block h-5 w-5 rounded-full bg-white shadow transition-transform duration-300 ${
-        isRecruiting ? "translate-x-4" : "translate-x-0"
-      }`}
-    />
-  </label>
-</div>
+                  className={`absolute top-[2px] left-[2px] block h-5 w-5 rounded-full bg-white shadow transition-transform duration-300 ${
+                    isRecruiting ? "translate-x-[20px]" : "translate-x-0"
+                  }`}
+                />
+              </label>
             </div>
           </div>
 
-          {/* 중간: 포지션 태그 */}
+          {/* 포지션 태그 */}
           {team.positions.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {team.positions.map((pos) => (
@@ -223,16 +211,17 @@ export function MyTeamCard({
               <div className="flex items-center gap-2">
                 {/* 멤버 아바타 */}
                 <div className="flex items-center">
-                  {team.members.slice(0, 5).map((m, i) => (
+                  {team.members.slice(0, 6).map((m, i) => (
                     <div
                       key={m.id}
-                      className={`flex h-6 w-6 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-gray-200 text-[10px] font-semibold text-gray-600 ${i !== 0 ? "-ml-1.5" : ""}`}
-                      title={m.name}
+                      className={`group relative flex h-7 w-7 cursor-pointer items-center justify-center overflow-visible rounded-full border-2 border-white bg-gradient-to-br from-blue-400 to-green-400 text-[10px] font-bold text-white ${i !== 0 ? "-ml-2" : ""}`}
                     >
-                      {m.image ? (
-                        <img src={m.image} alt={m.name ?? ""} className="h-full w-full object-cover" />
-                      ) : (
-                        (m.name ?? "?")[0]
+                      <span className="z-10">{(m.name ?? "?")[0]}</span>
+                      {m.name && (
+                        <div className="pointer-events-none absolute -top-8 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-lg bg-gray-800 px-2 py-1 text-[10px] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
+                          {m.name}
+                          <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-gray-800" />
+                        </div>
                       )}
                     </div>
                   ))}
@@ -246,20 +235,18 @@ export function MyTeamCard({
             <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${
-                  isRecruiting
-                    ? "bg-gradient-to-r from-blue-400 to-green-400"
-                    : "bg-gray-300"
+                  isRecruiting ? "bg-gradient-to-r from-blue-400 to-green-400" : "bg-gray-300"
                 }`}
                 style={{ width: `${fillPercent}%` }}
               />
             </div>
           </div>
 
-          {/* 하단: 수정/삭제 버튼 (오른쪽 정렬) */}
+          {/* 하단: 수정/삭제 */}
           <div className="flex justify-end gap-2 border-t border-gray-100 pt-3">
             <button
               onClick={() => setShowEditModal(true)}
-              className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-gray-200 px-4 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+              className="flex items-center whitespace-nowrap gap-1.5 rounded-lg border border-gray-200 px-4 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -268,7 +255,7 @@ export function MyTeamCard({
             </button>
             <button
               onClick={() => setShowDeleteModal(true)}
-              className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-red-200 px-4 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-50 transition-colors"
+              className="flex items-center whitespace-nowrap gap-1.5 rounded-lg border border-red-200 px-4 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-50 transition-colors"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
