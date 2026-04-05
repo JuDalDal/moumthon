@@ -30,9 +30,10 @@ function CardExternalLink({
 
 interface HackathonCardProps {
   hackathon: Hackathon
+  participantCount?: number
 }
 
-export function HackathonCard({ hackathon }: HackathonCardProps) {
+export function HackathonCard({ hackathon, participantCount = 0 }: HackathonCardProps) {
   const { period, links } = hackathon
   const StatusIcon = STATUS_ICON[hackathon.status]
 
@@ -66,9 +67,11 @@ export function HackathonCard({ hackathon }: HackathonCardProps) {
           <StatusIcon size={11} />
           {STATUS_LABEL[hackathon.status]}
         </span>
-        <span className="inline-flex items-center rounded-lg bg-primary px-3 py-1 text-sm font-bold text-white shadow-md">
-          - 명 참여중!
-        </span>
+        {hackathon.status === "ongoing" && (
+          <span className="inline-flex items-center rounded-lg bg-primary px-3 py-1 text-sm font-bold text-white shadow-md">
+            {participantCount}명 참여중!
+          </span>
+        )}
       </div>
 
       {/* Bottom content — pointer-events-none so clicks fall through to the Link */}

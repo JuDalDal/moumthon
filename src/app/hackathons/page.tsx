@@ -3,12 +3,24 @@
 import { useState, useMemo } from "react"
 import { RotateCcw } from "lucide-react"
 import hackathonsData from "@/assets/data/public_hackathons.json"
+import teamMembersData from "@/assets/data/public_team_members.json"
 import { HackathonCard } from "@/components/feature/hackathons/HackathonCard"
 import { cn } from "@/lib/utils"
 import type { Hackathon, HackathonStatus } from "@/types/hackathon"
 import { STATUS_LABEL, STATUS_ICON } from "@/lib/hackathonStatus"
 
 const hackathons = hackathonsData as Hackathon[]
+
+// 해커톤별 고유 참가자 수 (팀 멤버 데이터 기반)
+const _slugUserSets: Record<string, Set<string>> = {}
+for (const teamEntry of teamMembersData) {
+  const slug = teamEntry.hackathonSlug
+  if (!_slugUserSets[slug]) _slugUserSets[slug] = new Set()
+  for (const m of teamEntry.members) _slugUserSets[slug].add(m.userId)
+}
+const participantCountMap: Record<string, number> = Object.fromEntries(
+  Object.entries(_slugUserSets).map(([slug, set]) => [slug, set.size])
+)
 
 const STATUS_OPTIONS: HackathonStatus[] = ["upcoming", "ongoing", "ended"]
 
@@ -141,7 +153,7 @@ export default function HackathonsPage() {
       {paged.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
           {paged.map((h) => (
-            <HackathonCard key={h.slug} hackathon={h} />
+            <HackathonCard key={h.slug} hackathon={h} participantCount={participantCountMap[h.slug] ?? 0} />
           ))}
         </div>
       ) : (

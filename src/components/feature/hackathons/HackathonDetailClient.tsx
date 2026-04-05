@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef } from "react"
 import { BookOpen, HelpCircle } from "lucide-react"
 import type { HackathonDetail, Leaderboard } from "@/types/hackathonDetail"
+import type { HackathonStatus } from "@/types/hackathon"
 import type { Team } from "@/types/team"
 import { useHackathonDetailStore } from "@/stores/hackathonDetailStore"
 import HackathonOverviewSection from "./HackathonOverviewSection"
@@ -19,6 +20,7 @@ interface Props {
   initialSection?: string
   teams?: Team[]
   leaderboard?: Leaderboard
+  hackathonStatus?: HackathonStatus
 }
 
 const SECTION_IDS = ["overview", "eval", "schedule", "prize", "teams", "submit"] as const
@@ -26,7 +28,7 @@ type SectionId = (typeof SECTION_IDS)[number]
 
 const CONTENT_ID = "hackathon-content"
 
-export default function HackathonDetailClient({ detail, slug, initialSection, teams = [], leaderboard }: Props) {
+export default function HackathonDetailClient({ detail, slug, initialSection, teams = [], leaderboard, hackathonStatus = "upcoming" }: Props) {
   const { activeSection, setActiveSection, scrollTarget, clearScrollTarget } = useHackathonDetailStore()
   const hasPrize = !!detail.sections.prize
   const scrollLockRef = useRef(false)
@@ -182,11 +184,15 @@ export default function HackathonDetailClient({ detail, slug, initialSection, te
             teamsSection={sections.teams}
             teams={teams}
             slug={slug}
+            hackathonStatus={hackathonStatus}
+            allowSolo={sections.overview.teamPolicy.allowSolo}
           />
           <HackathonSubmitSection
             ref={sectionRefs.submit}
             submit={sections.submit}
             slug={slug}
+            hackathonStatus={hackathonStatus}
+            allowSolo={sections.overview.teamPolicy.allowSolo}
           />
         </div>
       )}
