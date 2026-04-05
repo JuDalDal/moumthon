@@ -7,6 +7,7 @@ import { Bell, ChevronRight } from "lucide-react";
 import { Button } from "@/components/common";
 import { useMemberStore } from "@/stores/memberStore";
 import { createLocalStore } from "@/lib/storage";
+import myInitialData from "@/assets/data/my.json";
 import { Nav } from "./Nav";
 import { Breadcrumb } from "./Breadcrumb";
 
