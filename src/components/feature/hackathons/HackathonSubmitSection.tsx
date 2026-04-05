@@ -25,6 +25,8 @@ const HackathonSubmitSection = forwardRef<HTMLElement, Props>(({ submit, slug },
   const [loginDialogOpen, setLoginDialogOpen] = useState(false)
   const [submittedKeys, setSubmittedKeys] = useState<Set<string>>(new Set())
 
+  const items = submit.submissionItems ?? [{ key: "default", title: "제출하기", format: submit.allowedArtifactTypes[0] ?? "url" }]
+
   useEffect(() => {
     if (!member?.userId) { setSubmittedKeys(new Set()); return }
     const { data: session } = createLocalStore<MySession>("my", "userId").getById(member.userId)
@@ -32,15 +34,13 @@ const HackathonSubmitSection = forwardRef<HTMLElement, Props>(({ submit, slug },
     if (!myTeam) return
     const { data: ts } = createLocalStore<TeamSubmissions>("submissions", "teamCode").getById(myTeam.teamCode as string)
     if (!ts) return
-    const submissionItems = submit.submissionItems ?? []
     const keys = new Set<string>()
     ts.submissions.forEach((s, idx) => {
       const key = (s as Record<string, unknown>).itemKey as string | undefined
       if (key) {
         keys.add(key)
-      } else if (submissionItems[idx]) {
-        // seed 데이터처럼 itemKey 없는 경우: 순서로 매핑
-        keys.add(submissionItems[idx].key)
+      } else if (items[idx]) {
+        keys.add(items[idx].key)
       }
     })
     setSubmittedKeys(keys)
@@ -50,8 +50,6 @@ const HackathonSubmitSection = forwardRef<HTMLElement, Props>(({ submit, slug },
     if (!member) { setLoginDialogOpen(true); return }
     router.push(`/hackathons/${slug}/submit/${key}`)
   }
-
-  const items = submit.submissionItems ?? [{ key: "default", title: "제출하기", format: submit.allowedArtifactTypes[0] ?? "url" }]
 
   return (
     <section ref={ref} id="submit">
