@@ -32,6 +32,7 @@ function getSinceDate(filter: Filter): Date | undefined {
 function RankRow({ entry, isMe, height }: { entry: UserRankEntry; isMe: boolean; height: number }) {
   return (
     <div
+      data-testid={`ranking-row-${entry.userId}`}
       style={{ height }}
       className={cn(
         `grid ${COLS} items-center border-b border-border last:border-0 transition-colors shrink-0`,
@@ -42,10 +43,10 @@ function RankRow({ entry, isMe, height }: { entry: UserRankEntry; isMe: boolean;
           : "hover:bg-muted/20",
       )}
     >
-      <div className="flex justify-center px-6">
+      <div data-testid={`ranking-rank-${entry.userId}`} className="flex justify-center px-6">
         <RankBadge rank={entry.rank} />
       </div>
-      <div className="flex items-center gap-4 px-6">
+      <div data-testid={`ranking-nickname-${entry.userId}`} className="flex items-center gap-4 px-6">
         <Avatar
           src={entry.avatarUrl}
           alt={entry.displayName}
@@ -60,7 +61,7 @@ function RankRow({ entry, isMe, height }: { entry: UserRankEntry; isMe: boolean;
         </div>
       </div>
       <div className="flex items-center justify-end gap-1.5 px-8">
-        <span className="text-xl font-black font-mono text-blue-600">
+        <span data-testid={`ranking-points-${entry.userId}`} className="text-xl font-black font-mono text-blue-600">
           {entry.points.toFixed(1)}
         </span>
         <span className="text-sm text-muted-foreground">pts</span>
@@ -128,6 +129,7 @@ export default function RankingClient({ leaderboardData, teams, teamMembersData,
           {FILTERS.map((f) => (
             <button
               key={f.value}
+              data-testid={`ranking-filter-${f.value}-btn`}
               onClick={() => handleFilterChange(f.value)}
               className={cn(
                 "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
@@ -152,11 +154,11 @@ export default function RankingClient({ leaderboardData, teams, teamMembersData,
         </div>
 
         {rankings.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
+          <div data-testid="ranking-empty-msg" className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
             해당 기간에 제출된 결과가 없습니다.
           </div>
         ) : (
-          <div ref={contentRef} className="flex-1 min-h-0">
+          <div ref={contentRef} data-testid="ranking-table" className="flex-1 min-h-0">
             {/* 내 순위 고정 */}
             {myEntry && (
               <>
