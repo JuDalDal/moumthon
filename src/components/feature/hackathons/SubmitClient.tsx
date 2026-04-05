@@ -24,11 +24,6 @@ type TeamSubmissions = { hackathonSlug: string; teamCode: string; teamName: stri
 type LeaderboardEntry = { rank: number; teamName: string; score: number; submittedAt: string; [key: string]: unknown }
 type LeaderboardRecord = { hackathonSlug: string; updatedAt: string; entries: LeaderboardEntry[]; [key: string]: unknown }
 
-// ── Format parsing ──────────────────────────────────────────────────────────
-// "text_or_url" → { mode: "or", tokens: ["text", "url"] }
-// "pdf_url"     → { mode: "and", tokens: ["pdf", "url"] }
-// "url"         → { mode: "single", tokens: ["url"] }
-
 type ParsedFormat =
   | { mode: "single"; token: string }
   | { mode: "or"; tokens: string[] }
@@ -63,7 +58,6 @@ function tokenPlaceholder(token: string) {
   return "https://..."
 }
 
-// ── Field component ─────────────────────────────────────────────────────────
 function FieldInput({ token, value, onChange }: { token: string; value: string; onChange: (v: string) => void }) {
   if (token === "text") {
     return (
@@ -72,7 +66,7 @@ function FieldInput({ token, value, onChange }: { token: string; value: string; 
         onChange={(e) => onChange(e.target.value)}
         placeholder={tokenPlaceholder(token)}
         rows={5}
-        className="w-full rounded-lg border border-border bg-input px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+        className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
       />
     )
   }
@@ -82,12 +76,11 @@ function FieldInput({ token, value, onChange }: { token: string; value: string; 
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={tokenPlaceholder(token)}
-      className="w-full rounded-lg border border-border bg-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+      className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
     />
   )
 }
 
-// ── Main ────────────────────────────────────────────────────────────────────
 export default function SubmitClient({ detail, slug, itemKey, hackathonStatus }: Props) {
   const router = useRouter()
   const member = useMemberStore((s) => s.member)
@@ -97,14 +90,11 @@ export default function SubmitClient({ detail, slug, itemKey, hackathonStatus }:
   const currentItem = items.find((i) => i.key === itemKey) ?? items[0]
   const parsed = parseFormat(currentItem.format)
 
-  // "or" 모드: 선택된 토큰
   const [selectedToken, setSelectedToken] = useState<string>(
     parsed.mode === "or" ? parsed.tokens[0] : "",
   )
-  // 토큰별 입력값
   const [values, setValues] = useState<Record<string, string>>({})
   const setValue = (token: string, v: string) => setValues((prev) => ({ ...prev, [token]: v }))
-
   const [newScore, setNewScore] = useState<number | null>(null)
   const [showCelebration, setShowCelebration] = useState(false)
   const [error, setError] = useState("")
@@ -146,6 +136,7 @@ export default function SubmitClient({ detail, slug, itemKey, hackathonStatus }:
 
   // 이미 제출된 항목인지 확인
   const [existingSubmission, setExistingSubmission] = useState<Submission | null | undefined>(undefined)
+
   useEffect(() => {
     if (!member?.userId) return
     const { data: session } = createLocalStore<MySession>("my", "userId").getById(member.userId)
@@ -153,13 +144,11 @@ export default function SubmitClient({ detail, slug, itemKey, hackathonStatus }:
     if (!myTeam) { setExistingSubmission(null); return }
     const { data: ts } = createLocalStore<TeamSubmissions>("submissions", "teamCode").getById(myTeam.teamCode)
     if (!ts) { setExistingSubmission(null); return }
-    // itemKey로 찾거나, seed 데이터처럼 itemKey 없는 경우 submissionItems 순서로 대응
     const items = detail.sections.submit.submissionItems ?? []
     const itemIndex = items.findIndex((i) => i.key === itemKey)
     const found = ts.submissions.find((s) => {
       const rec = s as Record<string, unknown>
       if (rec.itemKey) return rec.itemKey === itemKey
-      // itemKey 없는 seed 데이터: submissionItems 순서와 submissions 순서를 매핑
       return itemIndex >= 0 && ts.submissions.indexOf(s) === itemIndex
     })
     setExistingSubmission(found ?? null)
@@ -169,7 +158,6 @@ export default function SubmitClient({ detail, slug, itemKey, hackathonStatus }:
   const displayScore = newScore ?? existingSubmission?.score ?? null
 
   const handleSubmit = () => {
-    // 유효성 검사
     if (parsed.mode === "single") {
       if (!values[parsed.token]?.trim()) { setError("내용을 입력해주세요."); return }
     } else if (parsed.mode === "or") {
@@ -194,7 +182,6 @@ export default function SubmitClient({ detail, slug, itemKey, hackathonStatus }:
     const submittedAt = new Date().toISOString()
     const submissionId = `SUB-${myTeam.teamCode}-${itemKey.toUpperCase()}-${Date.now()}`
 
-    // 제출 artifact 구성
     let artifactType: string
     let artifactUrl: string | undefined
     let artifactContent: string | undefined
@@ -204,12 +191,9 @@ export default function SubmitClient({ detail, slug, itemKey, hackathonStatus }:
       if (selectedToken === "text") artifactContent = values[selectedToken]
       else artifactUrl = values[selectedToken]
     } else if (parsed.mode === "and") {
-      // 복합 제출: 모든 항목을 JSON으로 artifactContent에 저장
       artifactType = "multi"
       const structured: Record<string, string> = {}
-      for (const token of parsed.tokens) {
-        structured[token] = values[token]
-      }
+      for (const token of parsed.tokens) { structured[token] = values[token] }
       artifactContent = JSON.stringify(structured)
     } else {
       artifactType = parsed.token
@@ -218,11 +202,7 @@ export default function SubmitClient({ detail, slug, itemKey, hackathonStatus }:
     }
 
     const newSubmission: Submission = {
-      submissionId,
-      itemKey,
-      submittedAt,
-      artifactType,
-      status: "received",
+      submissionId, itemKey, submittedAt, artifactType, status: "received",
       ...(artifactUrl ? { artifactUrl } : {}),
       ...(artifactContent ? { artifactContent } : {}),
     }
@@ -259,27 +239,27 @@ export default function SubmitClient({ detail, slug, itemKey, hackathonStatus }:
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold">{detail.title}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{currentItem.title}</p>
+        <h1 className="text-2xl font-bold text-gray-900">{detail.title}</h1>
+        <p className="mt-1 text-sm text-gray-400">{currentItem.title}</p>
       </div>
 
-      <div className="rounded-xl border border-border bg-card p-6 space-y-6">
-        <div className="flex items-center justify-between pb-4 border-b border-border">
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-6">
+        <div className="flex items-center justify-between pb-4 border-b border-gray-100">
           <div className="flex items-center gap-2.5">
-            <div className="p-1.5 rounded-md bg-primary-50">
-              <Upload size={16} className="text-primary-600" />
+            <div className="p-1.5 rounded-md bg-blue-50">
+              <Upload size={16} className="text-blue-500" />
             </div>
-            <h2 className="text-base font-semibold">{currentItem.title}</h2>
+            <h2 className="text-base font-semibold text-gray-800">{currentItem.title}</h2>
           </div>
         </div>
 
         {submitSection.guide.length > 0 && (
-          <div className="rounded-lg bg-muted/30 border border-border px-4 py-3">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">제출 가이드</p>
+          <div className="rounded-xl bg-gray-50 border border-gray-200 px-4 py-3">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">제출 가이드</p>
             <ul className="space-y-1.5">
               {submitSection.guide.map((g, i) => (
-                <li key={i} className="flex gap-2 text-sm text-foreground">
-                  <span className="text-primary-400 shrink-0 mt-0.5">{i + 1}.</span>
+                <li key={i} className="flex gap-2 text-sm text-gray-700">
+                  <span className="text-blue-400 shrink-0 mt-0.5">{i + 1}.</span>
                   {g}
                 </li>
               ))}
@@ -288,8 +268,8 @@ export default function SubmitClient({ detail, slug, itemKey, hackathonStatus }:
         )}
 
         {hackathonStatus !== "ongoing" ? (
-          <div data-testid="submit-status-blocked-msg" className="flex flex-col items-center gap-3 py-8 text-center text-muted-foreground">
-            <p className="text-base font-semibold">
+          <div data-testid="submit-status-blocked-msg" className="flex flex-col items-center gap-3 py-8 text-center text-gray-400">
+            <p className="text-base font-semibold text-gray-700">
               {hackathonStatus === "ended" ? "종료된 해커톤입니다." : "아직 시작되지 않은 해커톤입니다."}
             </p>
             <p className="text-sm">진행 중인 해커톤에서만 제출할 수 있습니다.</p>
@@ -301,11 +281,11 @@ export default function SubmitClient({ detail, slug, itemKey, hackathonStatus }:
               aria-hidden="true"
               className="pointer-events-none absolute -inset-x-10 -inset-y-6 h-[calc(100%+3rem)] w-[calc(100%+5rem)]"
             />
-            <CheckCircle size={36} className="relative z-10 text-primary-600" />
-            <p className="relative z-10 text-base font-semibold">제출이 완료되었습니다!</p>
+            <CheckCircle size={36} className="relative z-10 text-blue-500" />
+            <p className="text-base font-semibold text-gray-800">제출이 완료되었습니다!</p>
             {displayScore != null && (
-              <p className="relative z-10 text-sm text-muted-foreground">
-                점수: <span className="font-mono font-semibold text-primary-600">
+              <p className="relative z-10 text-sm text-gray-500">
+                점수: <span className="font-mono font-semibold text-blue-600">
                   {displayScore < 1 ? displayScore.toFixed(4) : displayScore.toFixed(1)}
                 </span>점
               </p>
@@ -319,8 +299,6 @@ export default function SubmitClient({ detail, slug, itemKey, hackathonStatus }:
           </div>
         ) : (
           <div className="space-y-5">
-
-            {/* or 모드: 탭 선택 */}
             {parsed.mode === "or" && (
               <div className="space-y-3">
                 <div className="flex gap-2">
@@ -331,8 +309,8 @@ export default function SubmitClient({ detail, slug, itemKey, hackathonStatus }:
                       className={cn(
                         "px-4 py-1.5 rounded-full text-xs font-medium border transition-colors",
                         selectedToken === token
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "border-border text-muted-foreground hover:bg-muted",
+                          ? "bg-blue-500 text-white border-blue-500"
+                          : "border-gray-200 text-gray-500 hover:bg-gray-50",
                       )}
                     >
                       {tokenLabel(token)}
@@ -340,7 +318,7 @@ export default function SubmitClient({ detail, slug, itemKey, hackathonStatus }:
                   ))}
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  <label className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
                     {tokenLabel(selectedToken)} 입력
                   </label>
                   <FieldInput
@@ -352,11 +330,10 @@ export default function SubmitClient({ detail, slug, itemKey, hackathonStatus }:
               </div>
             )}
 
-            {/* and 모드: 모든 항목 입력 */}
             {parsed.mode === "and" && parsed.tokens.map((token) => (
               <div key={token} className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  {tokenLabel(token)} <span className="text-destructive">*</span>
+                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                  {tokenLabel(token)} <span className="text-red-400">*</span>
                 </label>
                 <FieldInput
                   token={token}
@@ -366,10 +343,9 @@ export default function SubmitClient({ detail, slug, itemKey, hackathonStatus }:
               </div>
             ))}
 
-            {/* single 모드 */}
             {parsed.mode === "single" && (
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
                   {tokenLabel(parsed.token)} 입력
                 </label>
                 <FieldInput
@@ -380,11 +356,11 @@ export default function SubmitClient({ detail, slug, itemKey, hackathonStatus }:
               </div>
             )}
 
-            {error && <p className="text-xs text-destructive">{error}</p>}
+            {error && <p className="text-xs text-red-400">{error}</p>}
 
             <button
               onClick={handleSubmit}
-              className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground hover:bg-primary-700 transition-colors"
+              className="w-full rounded-xl bg-gradient-to-r from-blue-500 to-green-400 px-4 py-3 text-sm font-semibold text-white hover:opacity-90 transition-opacity"
             >
               제출하기
             </button>
@@ -394,4 +370,3 @@ export default function SubmitClient({ detail, slug, itemKey, hackathonStatus }:
     </div>
   )
 }
-
