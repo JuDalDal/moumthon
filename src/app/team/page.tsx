@@ -1,89 +1,101 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { TeamCard } from "@/components/feature/team/TeamCard";
+import { MyTeamCard, MyTeam } from "@/components/feature/team/MyTeamCard";
+import teamsData from "@/assets/data/public_teams.json";
+import teamMembersData from "@/assets/data/public_team_members.json";
+
+import sessionData from "@/assets/data/my.json";
 
 type StatusFilter = "all" | "recruiting" | "closed";
 type TypeFilter = "all" | "hackathon" | "open";
 
+// JSON 타입 정의
+type RawTeam = {
+  teamCode: string;
+  hackathonSlug: string;
+  name: string;
+  isOpen: boolean;
+  memberCount: number;
+  lookingFor: string[];
+  intro: string;
+  contact: { type: string; url: string };
+  createdAt: string;
+};
+
+type RawMember = {
+  userId: string;
+  displayName: string;
+  avatarUrl: string;
+  role: string;
+  joinedAt: string;
+};
+
+type RawTeamMembers = {
+  teamCode: string;
+  hackathonSlug: string;
+  members: RawMember[];
+};
+
 export default function TeamPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+  const router = useRouter();
 
-  const teams = [
-    {
-      title: "AI 해커톤 팀",
-      description: "AI 기반 서비스를 함께 만들 팀원을 모집합니다.",
-      status: "recruiting" as const,
-      teamType: "hackathon" as const,
-      positions: ["프론트엔드", "백엔드", "AI/ML"],
-      members: [
-        { id: 1, image: "/p1.png" },
-        { id: 2, image: "/p2.png" },
-        { id: 3, image: "/p3.png" },
-        { id: 4, image: "/p4.png" },
-      ],
-      maxMembers: 5,
-    },
-    {
-      title: "블록체인 팀",
-      description: "Web3 기반 프로젝트를 진행한 팀입니다.",
-      status: "closed" as const,
-      teamType: "hackathon" as const,
-      positions: ["블록체인", "프론트엔드"],
-      members: [
-        { id: 1, image: "/p1.png" },
-        { id: 2, image: "/p2.png" },
-      ],
-      maxMembers: 7,
-    },
-    {
-      title: "헬스케어 앱 팀",
-      description: "사용자 맞춤 운동 루틴을 추천하는 앱을 개발합니다.",
-      status: "recruiting" as const,
-      teamType: "open" as const,
-      positions: ["iOS", "Android", "디자이너"],
-      members: [
-        { id: 1, image: "/p1.png" },
-        { id: 2, image: "/p2.png" },
-        { id: 3, image: "/p3.png" },
-        { id: 4, image: "/p4.png" },
-      ],
-      maxMembers: 5,
-    },
-    {
-      title: "환경 캠페인 플랫폼",
-      description: "친환경 활동을 기록하고 공유하는 서비스를 만들고 있습니다.",
-      status: "recruiting" as const,
-      teamType: "open" as const,
-      positions: ["기획자", "디자이너"],
-      members: [
-        { id: 1, image: "/p1.png" },
-        { id: 2, image: "/p2.png" },
-        { id: 3, image: "/p3.png" },
-      ],
-      maxMembers: 4,
-    },
-    {
-      title: "스터디 매칭 서비스",
-      description: "개발자 스터디를 쉽게 찾고 참여할 수 있는 플랫폼입니다.",
-      status: "closed" as const,
-      teamType: "open" as const,
-      positions: ["풀스택"],
-      members: [],
-      maxMembers: 8,
-    },
-  ];
+  const session = (sessionData as any[])[0];
+  const myTeamCodes = session?.myTeams?.map((t: any) => t.teamCode) ?? [];
 
-  const filteredTeams = teams.filter((team) => {
-    const statusMatch = statusFilter === "all" || team.status === statusFilter;
-    const typeMatch = typeFilter === "all" || team.teamType === typeFilter;
+  // 멤버 조회 헬퍼
+  const getMembersForTeam = (teamCode: string) => {
+    const found = (teamMembersData as RawTeamMembers[]).find(
+      (tm) => tm.teamCode === teamCode
+    );
+    return found?.members ?? [];
+  };
+
+  // 내 팀 목록 (session.myTeams 기준)
+  const myTeams: MyTeam[] = session?.myTeams?.map((myTeam: any) => {
+    const raw = (teamsData as RawTeam[]).find(
+      (t) => t.teamCode === myTeam.teamCode
+    );
+    const members = getMembersForTeam(myTeam.teamCode);
+    return {
+      teamCode: myTeam.teamCode,
+      title: raw?.name ?? myTeam.teamName,
+      description: raw?.intro ?? "",
+      teamType: "hackathon" as const,
+      status: raw?.isOpen ? ("recruiting" as const) : ("closed" as const),
+      positions: raw?.lookingFor ?? [],
+      members: members.map((m) => ({
+        id: m.userId,
+        image: m.avatarUrl,
+        name: m.displayName,
+      })),
+      maxMembers: 5,
+      contactUrl: raw?.contact?.url ?? "",
+    };
+  }) ?? [];
+
+  // 전체 팀 목록 (내 팀 제외)
+  const otherTeams = (teamsData as RawTeam[]).filter(
+    (t) => !myTeamCodes.includes(t.teamCode)
+  );
+
+  const filteredTeams = otherTeams.filter((team) => {
+    const statusMatch =
+      statusFilter === "all" ||
+      (statusFilter === "recruiting" && team.isOpen) ||
+      (statusFilter === "closed" && !team.isOpen);
+    const typeMatch = typeFilter === "all" || typeFilter === "hackathon";
     return statusMatch && typeMatch;
   });
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-white via-blue-50 to-green-50 px-4 py-16">
       <div className="mx-auto w-full max-w-6xl">
+
         {/* 헤더 */}
         <div className="mb-10 flex items-end justify-between">
           <div>
@@ -93,10 +105,38 @@ export default function TeamPage() {
               다양한 팀을 탐색하고, 원하는 팀에 참여하거나 직접 팀을 만들어보세요.
             </p>
           </div>
-          <button className="rounded-xl bg-gradient-to-r from-blue-500 to-green-400 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:scale-105">
+          <button
+            onClick={() => router.push("/team/new")}
+            className="rounded-xl bg-gradient-to-r from-blue-500 to-green-400 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:scale-105"
+          >
             + 팀 만들기
           </button>
         </div>
+
+        {/* My Team 섹션 */}
+        {myTeams.length > 0 && (
+          <div className="mb-10">
+            <p className="mb-3 text-xs font-bold uppercase tracking-widest text-gray-400">
+              My Team
+            </p>
+            <div className="flex flex-col gap-4">
+              {myTeams.map((team) => (
+                <MyTeamCard
+                  key={team.teamCode}
+                  team={team}
+                  onUpdate={(updated) => {
+                    // TODO: API 연결
+                    console.log("update", updated);
+                  }}
+                  onDelete={() => {
+                    // TODO: API 연결
+                    console.log("delete", team.teamCode);
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* 모집 여부 필터 */}
         <div className="mb-3 flex gap-2 text-sm">
@@ -139,18 +179,25 @@ export default function TeamPage() {
         {/* 카드 리스트 */}
         {filteredTeams.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredTeams.map((team, idx) => (
-              <TeamCard
-                key={idx}
-                title={team.title}
-                description={team.description}
-                status={team.status}
-                teamType={team.teamType}
-                positions={team.positions}
-                members={team.members}
-                maxMembers={team.maxMembers}
-              />
-            ))}
+            {filteredTeams.map((team) => {
+              const members = getMembersForTeam(team.teamCode);
+              return (
+                <TeamCard
+                  key={team.teamCode}
+                  title={team.name}
+                  description={team.intro}
+                  status={team.isOpen ? "recruiting" : "closed"}
+                  teamType="hackathon"
+                  positions={team.lookingFor}
+                  members={members.map((m) => ({
+                    id: Number(m.userId.replace("U-", "")),
+                    image: m.avatarUrl,
+                    name: m.displayName,
+                  }))}
+                  maxMembers={5}
+                />
+              );
+            })}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-20 text-gray-400">
