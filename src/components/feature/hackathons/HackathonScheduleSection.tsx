@@ -11,7 +11,7 @@ interface Props {
 
 const HackathonScheduleSection = forwardRef<HTMLElement, Props>(({ schedule }, ref) => {
   return (
-    <section ref={ref} id="schedule">
+    <section ref={ref} id="schedule" data-testid="hackathon-section-schedule">
       <HackathonSectionHeading icon={Clock}>일정</HackathonSectionHeading>
       <div className="space-y-0">
         {schedule.milestones.map((milestone, i) => {

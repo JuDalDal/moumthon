@@ -78,6 +78,7 @@ export default function HackathonDetailNav({ slug, hasPrize, submissionItems }: 
             return (
               <div key="submit" className="group/submit relative">
                 <button
+                  data-testid="hackathon-nav-submit-btn"
                   onClick={() => handleScrollSectionClick("submit")}
                   className={cn(
                     "w-full text-left pl-5 pr-3 py-2.5 text-sm font-medium transition-all duration-200 rounded-r-lg",
@@ -100,6 +101,7 @@ export default function HackathonDetailNav({ slug, hasPrize, submissionItems }: 
 
                 {/* Hover dropdown */}
                 <div
+                  data-testid="hackathon-nav-submit-dropdown"
                   className={cn(
                     "pointer-events-none opacity-0",
                     "group-hover/submit:pointer-events-auto group-hover/submit:opacity-100",
@@ -111,6 +113,7 @@ export default function HackathonDetailNav({ slug, hasPrize, submissionItems }: 
                   {submissionItems.map((item) => (
                     <button
                       key={item.key}
+                      data-testid={`hackathon-nav-submit-item-${item.key}`}
                       onClick={() => handleSubmitItemClick(item.key)}
                       className="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-muted/60 transition-colors"
                     >
@@ -125,6 +128,7 @@ export default function HackathonDetailNav({ slug, hasPrize, submissionItems }: 
           return (
             <button
               key={id}
+              data-testid={`hackathon-nav-${id}-btn`}
               onClick={() => handleScrollSectionClick(id)}
               className={cn(
                 "text-left pl-5 pr-4 py-2.5 text-sm font-medium transition-all duration-200 rounded-r-lg",
@@ -141,6 +145,7 @@ export default function HackathonDetailNav({ slug, hasPrize, submissionItems }: 
 
         {/* 리더보드 */}
         <button
+          data-testid="hackathon-nav-leaderboard-btn"
           onClick={handleLeaderboardClick}
           className={cn(
             "text-left pl-5 pr-4 py-2.5 text-sm font-medium transition-all duration-200 rounded-r-lg",

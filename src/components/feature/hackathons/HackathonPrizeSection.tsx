@@ -21,7 +21,7 @@ const PLACE_ICONS = ["🥇", "🥈", "🥉"]
 
 const HackathonPrizeSection = forwardRef<HTMLElement, Props>(({ prize }, ref) => {
   return (
-    <section ref={ref} id="prize">
+    <section ref={ref} id="prize" data-testid="hackathon-section-prize">
       <HackathonSectionHeading icon={Trophy}>상금</HackathonSectionHeading>
       <div className="flex items-end gap-3">
         {prize.items.slice(0, 3).map((item, i) => (

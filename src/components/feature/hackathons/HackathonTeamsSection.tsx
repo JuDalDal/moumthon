@@ -55,6 +55,7 @@ const HackathonTeamsSection = forwardRef<HTMLElement, Props>(({ teamsSection, te
   const [myTeam, setMyTeam] = useState<MyTeam | null>(null)
   const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([])
   const [receivedInvites, setReceivedInvites] = useState<ReceivedInvite[]>([])
+  const [joinCautionTarget, setJoinCautionTarget] = useState<Team | null>(null)
 
   useEffect(() => {
     if (!member?.userId) {
@@ -80,6 +81,16 @@ const HackathonTeamsSection = forwardRef<HTMLElement, Props>(({ teamsSection, te
     const { data } = createLocalStore<MySession>("my", "userId").getById(member.userId)
     return data ?? null
   }, [member?.userId])
+
+  const handleJoinRequestClick = (team: Team) => {
+    setJoinCautionTarget(team)
+  }
+
+  const handleJoinCautionConfirm = () => {
+    if (!joinCautionTarget) return
+    handleJoinRequest(joinCautionTarget)
+    setJoinCautionTarget(null)
+  }
 
   const handleJoinRequest = (team: Team) => {
     const session = getFullSession()
@@ -143,7 +154,7 @@ const HackathonTeamsSection = forwardRef<HTMLElement, Props>(({ teamsSection, te
   const hasPendingInvites = receivedInvites.some((i) => i.status === "pending")
 
   return (
-    <section ref={ref} id="teams">
+    <section ref={ref} id="teams" data-testid="hackathon-section-teams">
       <HackathonSectionHeading icon={Users}>팀</HackathonSectionHeading>
       <div className="space-y-3">
 
@@ -229,6 +240,7 @@ const HackathonTeamsSection = forwardRef<HTMLElement, Props>(({ teamsSection, te
                       <div className="flex items-center gap-1.5">
                         <span className="text-xs text-amber-700 font-medium mr-0.5">초대받음</span>
                         <button
+                          data-testid="hackathon-teams-invite-accept-btn"
                           onClick={() => handleAcceptInvite(invite)}
                           className="inline-flex items-center gap-0.5 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground hover:bg-primary-700 transition-colors"
                         >
@@ -236,6 +248,7 @@ const HackathonTeamsSection = forwardRef<HTMLElement, Props>(({ teamsSection, te
                           수락
                         </button>
                         <button
+                          data-testid="hackathon-teams-invite-reject-btn"
                           onClick={() => handleRejectInvite(invite.inviteId)}
                           className="inline-flex items-center gap-0.5 rounded-md border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground hover:bg-muted transition-colors"
                         >
@@ -260,7 +273,8 @@ const HackathonTeamsSection = forwardRef<HTMLElement, Props>(({ teamsSection, te
                       </div>
                     ) : team.isOpen && !myTeam && member ? (
                       <button
-                        onClick={() => handleJoinRequest(team)}
+                        data-testid={`hackathon-teams-join-btn-${team.teamCode}`}
+                        onClick={() => handleJoinRequestClick(team)}
                         className="text-xs rounded-lg border border-border px-3 py-1 hover:bg-muted transition-colors"
                       >
                         합류 신청
@@ -287,6 +301,44 @@ const HackathonTeamsSection = forwardRef<HTMLElement, Props>(({ teamsSection, te
           </a>
         )}
       </div>
+
+      {joinCautionTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => setJoinCautionTarget(null)}
+        >
+          <div
+            data-testid="hackathon-teams-join-caution-dialog"
+            className="rounded-xl bg-card border border-border p-6 w-80 shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex flex-col gap-4">
+              <h3 className="text-base font-semibold">합류 신청 유의사항</h3>
+              <ul className="space-y-1.5 text-sm text-muted-foreground">
+                <li>• 신청 후 팀장의 승인이 필요합니다.</li>
+                <li>• 한 해커톤에 하나의 팀에만 합류할 수 있습니다.</li>
+                <li>• 신청은 언제든 취소할 수 있습니다.</li>
+              </ul>
+              <div className="flex gap-2">
+                <button
+                  data-testid="hackathon-teams-join-caution-cancel-btn"
+                  onClick={() => setJoinCautionTarget(null)}
+                  className="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
+                >
+                  취소
+                </button>
+                <button
+                  data-testid="hackathon-teams-join-caution-confirm-btn"
+                  onClick={handleJoinCautionConfirm}
+                  className="flex-1 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-700 transition-colors"
+                >
+                  신청하기
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   )
 })
