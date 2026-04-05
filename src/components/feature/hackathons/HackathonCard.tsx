@@ -30,9 +30,10 @@ function CardExternalLink({
 
 interface HackathonCardProps {
   hackathon: Hackathon
+  participantCount?: number
 }
 
-export function HackathonCard({ hackathon }: HackathonCardProps) {
+export function HackathonCard({ hackathon, participantCount = 0 }: HackathonCardProps) {
   const { period, links } = hackathon
   const StatusIcon = STATUS_ICON[hackathon.status]
 
@@ -66,9 +67,12 @@ export function HackathonCard({ hackathon }: HackathonCardProps) {
           {STATUS_LABEL[hackathon.status]}
         </span>
 
-       <span className="inline-flex items-center rounded-lg bg-gradient-to-r from-blue-500 to-green-400 px-3 py-1 text-sm font-bold text-white shadow-md">
-    - 명 참여중!
-  </span>
+        {hackathon.status === "ongoing" && (
+          <span className="inline-flex items-center rounded-lg bg-gradient-to-r from-blue-500 to-green-400 px-3 py-1 text-sm font-bold text-white shadow-md">
+            {participantCount}명 참여중!
+          </span>
+        )}
+
       </div>
 
       {/* 하단 내용 */}
@@ -82,17 +86,17 @@ export function HackathonCard({ hackathon }: HackathonCardProps) {
           {hackathon.tags.map((tag) => (
             <span
               key={tag}
-              className="rounded-md bg-gray-500/40 px-3 py-1 text-xs font-medium text-gray-200"
+              className="rounded-md bg-gray-500/40 px-3 py-1 text-xs font-medium text-white" // 변경
             >
               #{tag}
             </span>
           ))}
         </div>
 
-        <div className="border-t  bg-gradient-to-r from-blue-500 via-green-400 to-lime-400 " />
+        <div className="border-t bg-gradient-to-r from-blue-500 via-green-400 to-lime-400 " />
 
         {/* 기간 */}
-        <div className="text-xs text-gray-200">
+        <div className="text-xs text-white"> {/* text-gray-200 → text-white */}
           {formatDate(period.submissionDeadlineAt, period.timezone)}
           <span className="mx-1.5 opacity-50">~</span>
           {formatDate(period.endAt, period.timezone)}
@@ -100,8 +104,7 @@ export function HackathonCard({ hackathon }: HackathonCardProps) {
 
         {/* 링크 */}
         <div className="flex gap-3 pointer-events-auto">
-          <CardExternalLink
-           href={links.rules}>
+          <CardExternalLink href={links.rules}>
             <BookOpen size={13} />
             규칙
           </CardExternalLink>
