@@ -12,6 +12,7 @@ interface Props {
   detail: HackathonDetail
   slug: string
   itemKey: string
+  hackathonStatus: string
 }
 
 type MyTeam = { hackathonSlug: string; teamCode: string; teamName: string; role: string }
@@ -86,7 +87,7 @@ function FieldInput({ token, value, onChange }: { token: string; value: string; 
 }
 
 // ── Main ────────────────────────────────────────────────────────────────────
-export default function SubmitClient({ detail, slug, itemKey }: Props) {
+export default function SubmitClient({ detail, slug, itemKey, hackathonStatus }: Props) {
   const router = useRouter()
   const member = useMemberStore((s) => s.member)
 
@@ -248,7 +249,14 @@ export default function SubmitClient({ detail, slug, itemKey }: Props) {
           </div>
         )}
 
-        {submitted ? (
+        {hackathonStatus !== "ongoing" ? (
+          <div data-testid="submit-status-blocked-msg" className="flex flex-col items-center gap-3 py-8 text-center text-muted-foreground">
+            <p className="text-base font-semibold">
+              {hackathonStatus === "ended" ? "종료된 해커톤입니다." : "아직 시작되지 않은 해커톤입니다."}
+            </p>
+            <p className="text-sm">진행 중인 해커톤에서만 제출할 수 있습니다.</p>
+          </div>
+        ) : submitted ? (
           <div className="flex flex-col items-center gap-3 py-8 text-center">
             <CheckCircle size={36} className="text-primary-600" />
             <p className="text-base font-semibold">제출이 완료되었습니다!</p>
@@ -343,3 +351,4 @@ export default function SubmitClient({ detail, slug, itemKey }: Props) {
     </div>
   )
 }
+

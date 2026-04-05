@@ -133,6 +133,28 @@ test.describe('해커톤 상세 페이지 - 리더보드', () => {
   })
 })
 
+test.describe('해커톤 상세 페이지 - 제출 차단', () => {
+  test('[필수] 종료된 해커톤의 제출 페이지에서 제출 폼이 차단된다', async ({ page }) => {
+    // aimers-8-model-lite: status = "ended"
+    await page.goto(`/hackathons/${SLUG}/submit/default`)
+    await expect(page.getByTestId('submit-status-blocked-msg')).toBeVisible()
+    await expect(page.getByTestId('submit-status-blocked-msg')).toContainText('종료된 해커톤')
+  })
+
+  test('[필수] 시작 전 해커톤의 제출 페이지에서 제출 폼이 차단된다', async ({ page }) => {
+    // daker-handover-2026-03: status = "upcoming"
+    await page.goto(`/hackathons/${SLUG_WITH_ITEMS}/submit/plan`)
+    await expect(page.getByTestId('submit-status-blocked-msg')).toBeVisible()
+    await expect(page.getByTestId('submit-status-blocked-msg')).toContainText('아직 시작되지 않은')
+  })
+
+  test('[필수] 진행 중인 해커톤의 제출 페이지에서 제출 폼이 노출된다', async ({ page }) => {
+    // monthly-vibe-coding-2026-02: status = "ongoing"
+    await page.goto('/hackathons/monthly-vibe-coding-2026-02/submit/idea')
+    await expect(page.getByTestId('submit-status-blocked-msg')).not.toBeVisible()
+  })
+})
+
 test.describe('해커톤 상세 페이지 - nav 제출 드롭다운', () => {
   test.beforeEach(async ({ page }) => {
     // daker-handover-2026-03는 plan/web/pdf 3개의 submission items를 가짐
