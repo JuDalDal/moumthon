@@ -2,6 +2,30 @@
 
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import hackathonDetailData from "@/assets/data/public_hackathon_detail.json";
+
+type HackathonDetail = { slug: string; sections: { overview: { teamPolicy: { maxTeamSize: number } } }; extraDetails?: HackathonDetail[] };
+
+function findMaxTeamSize(slug: string): number {
+  function search(detail: HackathonDetail): number | null {
+    if (detail.slug === slug) return detail.sections.overview.teamPolicy.maxTeamSize;
+    for (const extra of detail.extraDetails ?? []) {
+      const found = search(extra);
+      if (found !== null) return found;
+    }
+    return null;
+  }
+  return search(hackathonDetailData as HackathonDetail) ?? 20;
+}
+
+function isValidUrl(url: string): boolean {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 const HACKATHONS = [
   { slug: "aimers-8-model-lite", title: "Aimers 8기 : 모델 경량화 온라인 해커톤" },
@@ -14,16 +38,27 @@ function CampNewContent() {
   const searchParams = useSearchParams();
   const preselectedHackathon = searchParams.get("hackathon") ?? "";
 
-  const [teamType, setTeamType] = useState<"hackathon" | "open">(
-    preselectedHackathon ? "hackathon" : "hackathon"
-  );
+  const [teamType, setTeamType] = useState<"hackathon" | "open">("hackathon");
   const [hackathonSlug, setHackathonSlug] = useState(preselectedHackathon);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [positionInput, setPositionInput] = useState("");
   const [positions, setPositions] = useState<string[]>([]);
   const [contactUrl, setContactUrl] = useState("");
+  const [contactUrlError, setContactUrlError] = useState("");
   const [maxMembers, setMaxMembers] = useState(4);
+
+  const maxTeamSize = teamType === "hackathon" && hackathonSlug
+    ? findMaxTeamSize(hackathonSlug)
+    : 20;
+
+  const handleHackathonChange = (slug: string) => {
+    setHackathonSlug(slug);
+    if (slug) {
+      const limit = findMaxTeamSize(slug);
+      setMaxMembers((prev) => Math.min(prev, limit));
+    }
+  };
 
   const handleAddPosition = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && positionInput.trim()) {
@@ -32,9 +67,19 @@ function CampNewContent() {
     }
   };
 
+  const handleContactUrlChange = (url: string) => {
+    setContactUrl(url);
+    if (url && !isValidUrl(url)) {
+      setContactUrlError("올바른 URL 형식이 아닙니다. (예: https://...)");
+    } else {
+      setContactUrlError("");
+    }
+  };
+
   const handleSubmit = () => {
     if (!name.trim()) return;
     if (teamType === "hackathon" && !hackathonSlug) return;
+    if (contactUrl && !isValidUrl(contactUrl)) return;
     router.push("/camp");
   };
 
@@ -86,7 +131,7 @@ function CampNewContent() {
               <select
                 data-testid="camp-new-team-hackathon-select"
                 value={hackathonSlug}
-                onChange={(e) => setHackathonSlug(e.target.value)}
+                onChange={(e) => handleHackathonChange(e.target.value)}
                 className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
               >
                 <option value="">해커톤 선택</option>
@@ -160,15 +205,24 @@ function CampNewContent() {
 
           {/* 연락처 URL */}
           <div>
-            <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-gray-500">연락처 URL</label>
+            <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-gray-500">
+              연락처 URL <span className="normal-case font-normal text-gray-400">(선택)</span>
+            </label>
             <input
               data-testid="camp-new-team-contact-input"
               type="url"
               value={contactUrl}
-              onChange={(e) => setContactUrl(e.target.value)}
+              onChange={(e) => handleContactUrlChange(e.target.value)}
               placeholder="https://open.kakao.com/..."
-              className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+              className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm text-gray-800 outline-none focus:ring-2 transition-colors ${
+                contactUrlError
+                  ? "border-red-400 focus:border-red-400 focus:ring-red-200"
+                  : "border-gray-300 focus:border-blue-500 focus:ring-blue-200"
+              }`}
             />
+            {contactUrlError && (
+              <p className="mt-1 text-xs text-red-500">{contactUrlError}</p>
+            )}
           </div>
 
           {/* 최대 인원 */}
@@ -189,11 +243,14 @@ function CampNewContent() {
               <button
                 data-testid="camp-new-team-members-increase-btn"
                 type="button"
-                onClick={() => setMaxMembers((v) => Math.min(10, v + 1))}
+                onClick={() => setMaxMembers((v) => Math.min(maxTeamSize, v + 1))}
                 className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
               >
                 +
               </button>
+              {teamType === "hackathon" && hackathonSlug && (
+                <span className="text-xs text-gray-400 ml-1">최대 {maxTeamSize}명</span>
+              )}
             </div>
           </div>
 
@@ -211,7 +268,7 @@ function CampNewContent() {
               data-testid="camp-new-team-submit-btn"
               type="button"
               onClick={handleSubmit}
-              disabled={!name.trim() || (teamType === "hackathon" && !hackathonSlug)}
+              disabled={!name.trim() || (teamType === "hackathon" && !hackathonSlug) || (!!contactUrl && !!contactUrlError)}
               className="flex-1 rounded-xl bg-gradient-to-r from-blue-500 to-green-400 py-2.5 text-sm font-bold text-white hover:opacity-90 transition-opacity disabled:opacity-40"
             >
               팀 만들기
