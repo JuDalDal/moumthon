@@ -11,7 +11,7 @@ Next.js App Router, TypeScript, Tailwind CSS, @base-ui/react, class-variance-aut
 - Utility → `src/libs/<name>.ts`
 - Storage accessor → `src/libs/storage/<name>.ts`
 - Global state → `src/stores/<domain>Store.ts`
-- Playwright test → `src/e2e/<name>.spec.ts`
+- Playwright test → `e2e/<name>.spec.ts`
 
 ## Naming
 - Components: PascalCase
