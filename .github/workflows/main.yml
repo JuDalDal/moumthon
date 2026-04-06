@@ -22,7 +22,7 @@ jobs:
         with:
           source-directory: 'output'
           destination-github-username: LeeJinyeong218
-          destination-repository-name: moumthon
+          destination-repository-name: FRONTEND
           user-email: ${{ secrets.JINYOUNG_EMAIL }}
           commit-message: ${{ github.event.commits[0].message }}
           target-branch: main
